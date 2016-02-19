@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+# Automatically rename files in the current directory.
+# To generate the new file name, the command specified in ./.rename is being
+# used.
+
+
+zparseopts -A args f: l:
+
+
+file=$args[-f]
+lang=$args[-l]
+
+
+# remove bad characters from new file names
+function cleanse {
+    if [[ $lang == "en" ]]; then
+        print $@ | sed -r "s/ ?\/ ?/ and /" | sed -r "s/ ?\& ?/ and /" | sed -r "s/ä/ae/g" | sed -r "s/ö/oe/g" | sed -r "s/ü/ue/g" | sed -r "s/Ä/Ae/g" | sed -r "s/Ö/Oe/g" | sed -r "s/Ü/Ue/g"
+    else
+        print $@ | sed -r "s/ ?\/ ?/ und /" | sed -r "s/ ?\& ?/ und /" | sed -r "s/ä/ae/g" | sed -r "s/ö/oe/g" | sed -r "s/ü/ue/g" | sed -r "s/Ä/Ae/g" | sed -r "s/Ö/Oe/g" | sed -r "s/Ü/Ue/g"
+    fi
+}
+
+
+if [[ -z $file ]]; then
+    typeset -a files
+    IFS=$'\n'
+    files=($(ls))
+else
+    files=$file
+fi
+
+
+for file in $files; do
+    new_name=$(cleanse $(./.rename ${(q)file}))
+    # if the file's name already matches the new name, skip it
+    if [[ ${(q)file} != ${(q)new_name} ]]; then
+        print "mv '$file' '$new_name'?"
+        read c
+        if [[ $c == "y" || -z $c ]]; then
+            mv ${(Q)file} ${(Q)new_name}
+        fi
+    fi
+done

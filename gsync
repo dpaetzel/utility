@@ -1,0 +1,128 @@
+#!/usr/bin/env zsh
+
+
+# {{{
+function heading {
+    print $fg_bold[white]$@$reset_color
+}
+
+
+function indent () {
+    if [[ -z $1 ]]; then
+        awk "{ printf \"%*s%s\n\" , 2, \" \", \$0 }"
+    else
+        awk "{ printf \"%*s%s\n\" , $1 * 2, \" \", \$0 }"
+    fi
+}
+
+
+function setup () {
+    print "Creating empty \$GSYNCDIR at $GSYNCDIR"
+    mkdir $GSYNCDIR
+    print "Now link the directories you want to sync to $GSYNCDIR"
+}
+
+
+function commit () {
+
+    # if there were changes made to the index...
+    if [[ $(git status --porcelain | grep -E "^[^ ?]") ]]; then
+        # display them and ...
+        git status --short --column
+        # git status --short --untracked-files=no
+        # ask the user whether he wants to commit the changes
+        print "Commit these changes? (Y/n)"
+        read answer
+        if [[ -z $answer || $answer == "Y" ]]; then
+            git commit -m "gsync: $1"
+        else
+            git reset HEAD
+        fi
+    fi
+}
+
+
+# TODO problems when recursing into subdirs (git paths are always absolute from
+# git home folder)
+function non-binary () {
+
+    # get an array of untracked files
+    IFS=$'\n'
+    typeset -a files
+    files=($(git status --porcelain -uall | grep -E "^\?\?" | cut -d " " -f2-))
+    unset IFS
+
+    # check each untracked file for being binary
+    for file in $files; do
+        # add non-binary files to git directly
+        if [[ -f "$file" && -z $(file -i "$file" | sed -r "s/^.*\: //" | grep -E "binary") ]]; then
+            print "Adding non-binary file $file"
+            git add "$file"
+        fi
+
+        # recurse into not-yet-added directories
+        # if [[ -d $file ]]; then
+        #     working_dir=$(pwd)
+        #     cd $file
+
+        #     print $file
+        #     non-binary
+
+        #     cd $working_dir
+        # fi
+    done
+
+    commit "add non-binary files"
+}
+
+
+function all () {
+    git annex add .
+    commit "add all files"
+}
+
+
+function sync () {
+    git annex sync --content $1
+}
+# }}}
+
+
+currentdir=$(pwd)
+remote=$1
+
+
+if [[ -d $GSYNCDIR ]]; then
+    cd $GSYNCDIR
+elif [[ -z $GSYNCDIR ]]; then
+    print "Set \$GSYNCDIR (e.g. in your ~/.zshenv)"
+    exit
+else
+    setup
+    exit
+fi
+
+
+for dir in $(ls -A); do
+
+    cd $dir
+
+    autoload colors && colors
+    print "Synchronizing $(readlink -f $(pwd))"
+
+    print "Checking for and adding untracked non-binary files" |& indent
+    non-binary |& indent 2
+    print "Adding all changed or untracked files" |& indent
+    all |& indent 2
+    print "Synchronizing" |& indent
+    sync $remote |& indent 2
+
+    cd ..
+
+done
+
+
+cd $pwd
+
+
+# vim: foldmethod=marker

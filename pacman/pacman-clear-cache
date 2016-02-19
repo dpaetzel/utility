@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+cd /var/cache/pacman/pkg
+
+IFS=$'\n'
+
+files=(`ls`)
+
+for (( i = 0; i < ${#files[@]}; i++  )); do
+    package1=$(echo ${files[$i]} | sed -r "s/-([[:digit:]].*)$//")
+    package2=$(echo ${files[$i+1]} | sed -r "s/-([[:digit:]].*)$//")
+    if [[ $package1 = $package2 ]]; then
+        echo "removing ${files[$i]} because of ${files[$i+1]}" >> ~/.pacman-cache-clear.log
+        sudo rm ${files[$i]}
+    fi
+done

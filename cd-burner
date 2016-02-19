@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# wodim -dummy -v -pad dev=/dev/sr0 -dao -swab *.wav
+
+# echo ==========================================
+# echo Bei Fehlern jetzt Strg-C! Ansonsten Enter!
+# echo ==========================================
+# read
+
+wodim -v -pad dev=/dev/sr0 -dao -swab *.wav
+
+echo =====================
+echo Ich teste nun die CD!
+echo =====================
+
+eject
+
+eject -t
+
+mplayer -ss 00:00:40 -endpos 00:00:20 cdda://
+
+echo ================
+echo War das $(pwd)\?
+echo ================
+
+sleep 5
+
+eject

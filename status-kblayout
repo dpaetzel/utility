@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+`setxkbmap -print`.match(/\+(.*)\+/)
+case $1
+when "us"
+    puts "US"
+when "de"
+    puts "DE"
+end

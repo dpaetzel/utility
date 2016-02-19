@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+if system "pgrep dropbox"
+  system "killall dropbox"
+  system "notify-send 'killed dropbox'"
+  sleep 1
+  system "dropboxd &"
+  system "notify-send 'started dropbox'"
+else
+  system "dropboxd &"
+  system "notify-send 'started dropbox'"
+end

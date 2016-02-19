@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+echo MESSAGES
+echo
+grep `date -Idate` /var/log/pacman.log | grep -v "\[PACMAN\]"
+echo
+
+echo INSTALLS
+echo
+grep `date -Idate` /var/log/pacman.log | grep "\[PACMAN\]\sinstalled"
+echo
+
+echo REMOVES
+echo
+grep `date -Idate` /var/log/pacman.log | grep "\[PACMAN\]\sremoved"
+echo
+
+echo UPDATES
+echo
+grep `date -Idate` /var/log/pacman.log | grep "\[PACMAN\]\supgraded"
+echo

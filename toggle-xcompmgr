@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+if system "pgrep xcompmgr"
+  system "killall xcompmgr"
+  system "notify-send 'killed xcompmgr'"
+else
+  system "xcompmgr &"
+  system "notify-send 'started xcompmgr'"
+end

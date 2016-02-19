@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+
+integer COUNTER=0
+IP=`globalip | tail -1`
+echo "set IP to $IP ."
+
+while true; do
+  NEWIP=`globalip | tail -1`
+  if [[ $IP != $NEWIP ]]; then
+    notify-send -u critical "uah! a new ip" &
+    echo "`date` # old ip: $IP # new ip: $NEWIP"
+    COUNTER=$COUNTER+1
+    IP=$NEWIP
+  fi
+  sleep 10
+done

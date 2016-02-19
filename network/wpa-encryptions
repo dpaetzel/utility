@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+#
+
+mac = `iwconfig wlan0`[/Access Point:\ ((..:){5}..)/, 1]
+
+list = `iwlist wlan0 scan &2> /dev/null`
+
+ap = (list.split "Cell ").select { |x| x=~ /#{mac}/ }[0]
+
+  mode = list.delete("\n")[%r[#{mac}.*Encryption key:(\w{2,3})], 1]
+
+if mode == "off"
+  puts "no encryption"
+else
+
+  ap2 = (ap.split "IE: ")[1..-1]
+
+  # there are lines, where neither of wpa2 wpa or wep is shown -> nil => a if clause!
+  ap3 = Hash[ap2.map { |x| if (x[/(wpa2|wpa|wep)/i, 1]) != nil then [x[/(wpa2|wpa|wep)/i, 1].downcase.to_sym, x] end}]
+
+  ap4 =  ap3.map { |k,v| [k,v.split("\n").map { |e| i = e.partition(/\ :\ /).map { |x| x.sub(/^[^\w]*/, "") }; [i.first, i.last]}] }
+
+  ap5 = Hash[Hash[ap4].map { |k,v| [k, -> y { Hash[v.select { |x| not (x.first.empty? or x.last.empty?) } ][v.select { |o| o.first =~ /#{y}/i }.first.first] }] } ]
+
+    blub = -> x, y { y.include? x }.curry
+
+  case ap5
+  when blub[:wpa]
+#     print <<EOF
+# WPA | G: #{ap5[:wpa]['group']} | P: #{ap5[:wpa]['pairwise']} | A: #{ap5[:wpa]['authentication']}
+# EOF
+    print "WPA"
+  when blub[:wpa2]
+#     print <<EOF
+# WPA2 | G: #{ap5[:wpa2]['group']} | P: #{ap5[:wpa2]['pairwise']} | A: #{ap5[:wpa2]['authentication']}
+# EOF
+    print "WPA2"
+  when blub[:wep]
+    print "WEP"
+  else
+  end
+end

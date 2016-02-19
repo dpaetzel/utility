@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+DISPLAY=:0.0
+
+duration=25
+
+echo "Started pomodoro at $(date +%H:%M)"
+
+sleep $(( 60 * $duration))
+
+notify-send -u critical 'Take a break' 'You should take a break now!'
+# mplayer ~/Share/confs/sound/carriage_clock_quarter_hour_chime.mp3 &!

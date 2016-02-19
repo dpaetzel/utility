@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+rm $HOME/.config/UnofficialWhatsApp/Application\ Cache/Index*
+WhatsApp

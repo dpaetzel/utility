@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+
+ping = "ping -c 1 -W 2"
+# noconnection = ";("
+# noconnection = "△▽"
+# connection = "▲▼"
+# connection = "↑↓"
+noconnection = "no connection"
+
+
+if (ARGV[1] == "-A")
+  result = `#{ping} #{ARGV[0]} 2> /dev/null`
+
+  if (result != "")
+    result2 = result.split("\n")[1].split(" ")
+    puts result2[3] + " (#{ARGV[0]}): " + result2[7].split("=")[1] + "ms"
+  else
+    puts noconnection
+  end
+elsif (ARGV[1] == "-h")
+  result = `#{ping} #{ARGV[0]} 2> /dev/null`
+
+  if (result != "")
+    result2 = result.split("\n")[1].split(" ")
+    puts result2[3]
+  else
+    puts noconnection
+  end
+elsif (ARGV[1] == "-t")
+  result = `#{ping} #{ARGV[0]} 2> /dev/null`
+
+  if (result != "")
+    result2 = result.split("\n")[1].split(" ")
+    puts result2[7].split("=")[1] + "ms"
+  else
+    puts noconnection
+  end
+else
+  puts "usage: formatted_ping host [options]"
+  puts "  -A\tmuch information"
+  puts "  -t\ttime only"
+  puts "  -h\thostname only"
+end

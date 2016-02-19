@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+cd ~/.mozilla/firefox/fye13xho.default
+
+echo "the disturbing cookies are:"
+sqlite3 cookies.sqlite "select * from moz_cookies where baseDomain = \"augsburger-allgemeine.de\";"
+echo "deleting disturbing cookies ..."
+sqlite3 cookies.sqlite "delete from moz_cookies where baseDomain = \"augsburger-allgemeine.de\";"
+echo "... done."
