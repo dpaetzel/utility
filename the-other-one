@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+if [[ `hostname` == heraklit ]]; then
+    echo anaxagoras
+else
+    echo heraklit
+fi
