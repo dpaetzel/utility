@@ -1,0 +1,49 @@
+#!/usr/bin/env sh
+# This script transforms `goobook query` (especially returned group records)
+# results into name/email pairs that alot can parse.
+#
+# Alot does not (yet?) support address book records that contain *multiple*
+# addresses (aka groups); its address completion is build around single
+# name/email pairs. This script transforms lists of recipients to a single
+# name/email pair where the email is the last mail in the list, while the name
+# contains the rest of the list.
+#
+# For this to work, set
+# [[[abook]]]
+#   type = shellcommand
+#   command = /home/david/goobook-wrapper
+#   regexp = "(?P<name>[^:]+) +$delimiter +(?P<email>[^@]+@[^ ]+)"
+# in your alot configuration. Make sure, to replace the delimiter variable with
+# the value specified below!
+delimiter=::
+
+# Set to something with non-zero length, to get some debugging output.
+verbose=
+
+function log {
+    if [[ -n $verbose ]]; then
+        echo $@
+    fi
+}
+
+function isGroup {
+    countAts=$(grep -o @ <<< $1 | wc -l)
+    log This has $countAts @s.
+    countCommas=$(grep -o , <<< $1 | wc -l)
+    log This has $countCommas ,s.
+    return $(($countAts <= 1 || $countCommas == 0))
+}
+
+results=$(goobook query $@)
+
+IFS=$'\n'
+for result in $results; do
+    log Processing \"$result\"
+    if isGroup $result; then
+        log ...is a group!
+        sed -r "s/(.*) <([^<>]+)>\t[^\t]+/\1 $delimiter \2/" <<< $result
+    else
+        log ...is not a group!
+        sed -r "s/([^\t]+)\t([^\t]+).*/\2 $delimiter \1/" <<< $result
+    fi
+done
