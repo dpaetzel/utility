@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
-# This script transforms `goobook query` (especially returned group records)
-# results into name/email pairs that alot can parse.
+# This script transforms `goobook query` results (especially returned group
+# records!) into name/email pairs that alot can parse.
 #
 # Alot does not (yet?) support address book records that contain *multiple*
 # addresses (aka groups); its address completion is build around single
