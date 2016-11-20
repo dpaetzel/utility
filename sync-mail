@@ -1,9 +1,45 @@
 #!/usr/bin/env bash
+# Credit for the basic idea goes to pbrisbin
+# (https://pbrisbin.com/posts/mutt_gmail_offlineimap/) and probably many others.
 
-PID=$(pgrep offlineimap)
+# Check every $interval seconds if the process identified as $1 is still
+# running. After the next check after $wait seconds, kill it. Return non-zero to
+# indicate something was killed.
 
-[[ -n "$PID" ]] && kill "$PID"
+wait=${1:-300}
+interval=10
 
-offlineimap -o -u quiet &>/dev/null &
+monitor() {
+    local pid=$1 i=0
 
-exit
+    while ps $pid &>/dev/null; do
+        if (( i++ > $wait / $interval )); then
+            echo "Max checks reached. Sending SIGKILL to ${pid}..." >&2
+            kill -9 $pid
+            return 1
+        fi
+
+        sleep $interval
+    done
+
+    return 0
+}
+
+echo $(date)
+
+# First check whether offlineimap is already running; if it is, exit.
+if [[ -n $(pgrep offlineimap) ]]; then
+    echo "Process $pid already running. Exiting..." >&2
+    exit 1
+fi
+
+offlineimap -o $@ &
+monitor $!
+ret=$?
+
+# MAYBE if needed
+# sleep 1
+# notmuch new
+# afew --new --tag --verbose
+
+exit $ret
