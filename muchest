@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# Prints the name of the process with the biggest resident set size.  Also see
+# how-much.
+
+IFS=$'\n'
+
+for p in $(ps -e --format comm | sort -u); do
+    echo $p $(how-much $p)
+done \
+    | awk '{ print $2 ": " $1 }' \
+    | sort -r \
+    | head -1

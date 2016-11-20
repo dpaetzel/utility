@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+# Sums the resident set sizes of all processes having the given name.  Looking
+# at you, Chromium.
+
+name=$1
+
+sumExpr=$(ps -e --format rss,comm \
+              | grep --color -i -E $name\
+              | awk '{ print $1 }'\
+              | paste --delimiter + -s)
+
+rss=$(( ( $sumExpr ) / 1000.0 / 1000.0 ))
+
+if [[ $rss == 0. ]]; then
+    echo 0.00G
+else
+    echo $rss | sed -r 's/^(.{4}).*/\1G/'
+fi
