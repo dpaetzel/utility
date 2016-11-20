@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+# Clean up the $HOME directory (moving anything not belonging there to
+# $HOME/Temporary).
+
+allowed=( Bin Buchhaltung Code Desktop Documents Dropbox In.org Mail Pictures Projects Temporary TODO.org Videos )
+temporary=Temporary
+
+currentDir=$(pwd)
+cd $HOME
+
+IFS=$'\n'
+for f in $(ls); do
+    if [[ ${allowed[(i)$f]} -gt $#allowed ]]; then
+        cd $temporary
+        if [[ -e "$f" ]]; then
+            printf "Archiving older versions of $f… "
+            archiveFilename=$(mktemp -p . "$f-XXXXX")
+            mv "$f" "$archiveFilename" 2&> /dev/null
+        fi
+        cd $HOME
+
+        print "Cleaning $f"
+        mv "$f" "$temporary"
+    fi
+done
+
+cd "$currentDir"
