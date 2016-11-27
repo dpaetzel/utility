@@ -2,7 +2,7 @@
 # Clean up the $HOME directory (moving anything not belonging there to
 # $HOME/Temporary).
 
-allowed=( Bin Buchhaltung Code Desktop Documents Dropbox In.org Mail Pictures Projects Temporary TODO.org Videos )
+allowed=( Bin Buchhaltung Code Desktop Documents Dropbox In.org Mail Music Pictures Projects Temporary TODO.org Videos )
 temporary=Temporary
 
 currentDir=$(pwd)
