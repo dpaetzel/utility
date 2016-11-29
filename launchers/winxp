@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-
-vboxmanage startvm winxp-pentest
