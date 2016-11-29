@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-sudo ifconfig wlp3s0 down
-sudo iwconfig wlp3s0 mode ad-hoc
-sudo iwconfig wlp3s0 channel auto
-sudo iwconfig wlp3s0 essid BLUB
-sudo ifconfig wlp3s0 10.0.0.1 up
