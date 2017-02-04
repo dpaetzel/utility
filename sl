@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+# Screen layout switcher.  Sometimes I want to use an external screen.
+
+
+function resetWM {
+    $HOME/.fehbg
+
+    killall dzen2
+
+    xmonad --restart
+}
+
+
+case $1 in
+    home)
+        xrandr --output HDMI1 --off --output LVDS1 --mode 1366x768 --pos 0x312 --rotate normal --output VIRTUAL1 --off --output DP1 --off --output VGA1 --mode 1920x1080 --pos 1366x0 --rotate normal
+        resetWM
+        reconky dual
+        ;;
+    tv)
+        xrandr --output HDMI1 --off --output LVDS1 --off --output VIRTUAL1 --off --output DP1 --off --output VGA1 --mode 1360x768 --pos 0x0 --rotate normal
+        resetWM
+        reconky
+        ;;
+    *)
+        xrandr --output HDMI1 --off --output LVDS1 --mode 1366x768 --pos 0x0 --rotate normal --output VIRTUAL1 --off --output DP1 --off --output VGA1 --off
+        resetWM
+        reconky
+        ;;
+esac
