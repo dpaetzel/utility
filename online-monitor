@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+host=8.8.8.8
+
+wait=5
+
+while true; do
+    ping -c 3 -W $wait $host &> /dev/null
+
+    if [[ $? -eq 1 ]]; then
+        echo Unreachable at $(date +"%F %T")
+    fi
+done
