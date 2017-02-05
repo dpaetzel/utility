@@ -1,0 +1,140 @@
+#!/usr/bin/env zsh
+# Add a new project directory that is being version controlled by git or
+# git-annex.
+#
+# Even the default remotes for the directory are set up.  If some of them are
+# not available, simply make them available and re-run.
+
+# Exit on the first error
+
+set -e
+
+
+# The remotes to set up for each new project
+
+typeset -A remotes
+remotes=( seagate    "/run/media/$USER/SEAGATE-MWQ"
+          seagate    "/run/media/$USER/ZENO" )
+          # testRemote "$HOME/testRemote" )
+
+
+# Parse command line arguments
+
+typeset -a annex
+typeset -a help
+typeset -A mrconfig
+
+zparseopts -D a=annex h=help -mrconfig:=mrconfig m:=mrconfig
+
+if [[ -n $help ]]; then
+    echo "$0 [-a] [-h] path"
+    echo "  -a\tUse git-annex for the new repository"
+    echo "  -h\tDisplay this help"
+    echo "  name\tThe repository's path"
+    exit 0
+fi
+
+absPath=$(realpath $1)
+userPath=$(realpath --relative-to=/home/$USER $absPath)
+
+
+# Create project directory if non-existing
+
+if [[ -d $absPath ]]; then
+    echo "Using existing project at $absPath"
+elif [[ -f $absPath ]]; then
+    echo "$absPath exists and is a file"
+    exit 1
+else
+    echo "Creating new project in: $absPath"
+    mkdir $absPath
+fi
+
+
+# Go there
+
+workingDir=$(pwd)
+cd $absPath
+
+
+# Initialize git (and optionally git annex)
+
+git init
+
+if [[ -n $annex ]]; then
+    git annex init > /dev/null &&\
+        echo "Initialized git-annex"
+fi
+
+
+# Create the project main org file and add it to git
+
+f="$(basename $absPath)"
+orgFile="${(C)f}.org"
+
+if [[ ! -e $orgFile ]]; then
+    echo "Creating project org file"
+    touch $orgFile
+fi
+
+git add $orgFile
+
+git commit -m "Initial commit (only $orgFile)" > /dev/null &&\
+    echo "Created initial commit"
+
+
+# Add sections to the given mrconfigs
+
+for m in "${(v)mrconfig}"; do
+    relPath=$(realpath --relative-to $(dirname $m) $userPath)
+    echo "[$relPath]" >> $workingDir/$m
+done
+
+
+# Add remotes and create repository clones
+
+typeset -a failedRemotes
+
+for k in "${(@k)remotes}"; do
+    if [[ -n $annex ]]; then
+        remotePath="$remotes[$k]/$userPath"
+        mode=
+        checkoutCommand="git_annex_checkout"
+    else
+        remotePath="$remotes[$k]/$userPath.git"
+        mode="--bare"
+        checkoutCommand="git clone"
+    fi
+
+    git remote add $k "$remotePath" > /dev/null &&\
+        echo "Added remote $k at $remotePath"
+
+    if [[ ! -e $remotePath ]]; then
+        git clone $mode $absPath $remotePath 2> /dev/null &&\
+            echo "Cloned project to $remotePath"
+
+        if [[ ! -d $remotePath ]]; then
+            failedRemotes+="$remotePath"
+        fi
+    fi
+
+    # Add checkout entries to the given mrconfigs
+
+    for m in "${(v)mrconfig}"; do
+        echo "  checkout = $checkoutCommand $remotePath $relPath" >> $workingDir/$m
+    done
+done
+
+
+# Print which remotes could not be initialized
+
+if [[ -n $failedRemotes ]]; then
+    echo "Some standard remotes were not available, initializing clones failed:"
+    for r in $failedRemotes; do
+        echo "$r"
+    done
+fi
+
+echo "Done"
+
+cd $workingDir
