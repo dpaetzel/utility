@@ -18,6 +18,12 @@ if [[ -z $1 ]]; then
 elif (echo $1 | grep "^%$" > /dev/null); then
     pactl -- set-sink-mute $sink_name toggle
     exit 0
+elif (echo $1 | grep "^mute$" > /dev/null); then
+    pactl -- set-sink-mute $sink_name 1
+    exit 0
+elif (echo $1 | grep "^unmute$" > /dev/null); then
+    pactl -- set-sink-mute $sink_name 0
+    exit 0
 else
     pactl -- set-sink-volume $sink_name $1
     exit 0

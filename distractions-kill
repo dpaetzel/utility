@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+applications=( telegram-desktop )
+
+
+for a in "${applications}"; do
+    if pgrep -f $a >> /dev/null; then
+        killall -HUP $a
+        echo "Killed $a"
+    fi
+done
+
+
+volume mute
