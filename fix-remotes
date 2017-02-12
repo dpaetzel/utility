@@ -1,0 +1,42 @@
+#!/usr/bin/env zsh
+#
+# Fixes or sets up remotes for my external hard drives, pen drives etc.
+
+set -e
+
+typeset -A remotes
+remotes=( seagate "/run/media/$USER/SEAGATE-MWQ"
+          zeno    "/run/media/$USER/ZENO" )
+
+function inAnnex {
+    git annex status &> /dev/null
+}
+
+function fixRemote {
+    name=$1
+    url=$2
+
+    if [[ ! $(git remote get-url $name 2> /dev/null) == $url ]]; then
+        if git remote add $name "$url" &> /dev/null; then
+            echo "Added remote $name at $url"
+        elif git remote set-url $name "$url" &> /dev/null; then
+            echo "Reset remote $name to url $url"
+        else
+            echo "Could not fix remote $name at $url"
+        fi
+    fi
+}
+
+function fixRemotes {
+    for k in "${(@k)remotes}"; do
+        if inAnnex; then
+            remotePath="$remotes[$k]/$userPath"
+        else
+            remotePath="$remotes[$k]/$userPath.git"
+        fi
+
+        fixRemote $k $remotes[$k]
+    done
+}
+
+fixRemotes

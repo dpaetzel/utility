@@ -86,8 +86,11 @@ git commit -m "Initial commit (only $orgFile)" > /dev/null &&\
 # Add sections to the given mrconfigs
 
 for m in "${(v)mrconfig}"; do
-    relPath=$(realpath --relative-to $(dirname $m) $userPath)
-    echo "[$relPath]" >> $workingDir/$m
+    relPath=$(realpath --relative-to $(dirname $m) $absPath)
+    cd $workingDir
+    echo "\n\n" >> $m
+    echo "[$relPath]" >> $m
+    cd -
 done
 
 
@@ -106,23 +109,31 @@ for k in "${(@k)remotes}"; do
         checkoutCommand="git clone"
     fi
 
+    # Add checkout entries to the given mrconfigs
+
+    for m in "${(v)mrconfig}"; do
+        echo $k
+        cd $workingDir
+        echo "checkout = $checkoutCommand $remotePath $relPath" >> $m
+        cd -
+    done
+
+    # Add remote and try to initialise it
+
     git remote add $k "$remotePath" > /dev/null &&\
-        echo "Added remote $k at $remotePath"
+        echo "Added remote $k at $remotePath" ||\
+            echo "Could not add remote $k at $remotePath"
 
     if [[ ! -e $remotePath ]]; then
         git clone $mode $absPath $remotePath 2> /dev/null &&\
-            echo "Cloned project to $remotePath"
+            echo "Cloned project to $remotePath" ||\
+                echo "Could not clone to remote $k at $remotePath"
 
+        # TODO setup git annex at remote (“git annex group . backup” etc.)
         if [[ ! -d $remotePath ]]; then
             failedRemotes+="$remotePath"
         fi
     fi
-
-    # Add checkout entries to the given mrconfigs
-
-    for m in "${(v)mrconfig}"; do
-        echo "  checkout = $checkoutCommand $remotePath $relPath" >> $workingDir/$m
-    done
 done
 
 
