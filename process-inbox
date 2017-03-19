@@ -1,1 +1,50 @@
-/home/david/Documents/GTD/process-inbox
+#!/usr/bin/env zsh
+
+if [[ $1 != "--no-phone" ]]; then
+    # pull data from phone
+    if adb kill-server; then
+        sudo adb start-server
+    fi
+
+    if [[ -z $(adb devices | awk "NR != 1 { print }") ]]; then
+        echo Connect phone and restart!
+        exit 1
+    fi
+
+    if [[ -d $HOME/phone-sync ]]; then
+        mv $HOME/phone-sync $(mktemp -u -d -p $HOME $(date -I)-phone-sync-XXXX)
+    fi
+
+    mkdir $HOME/phone-sync
+    cd $HOME/phone-sync
+
+    # adb pull sdcard/orgzly/Inbox.org
+    # cat Inbox.org >> $HOME/In.org
+
+    adb pull sdcard/DCIM &
+fi
+
+# start the actual processing
+mutt
+chromium https://mail.google.com/mail/u/1/#inbox
+chromium https://digicampus.uni-augsburg.de
+chromium https://singsation-augsburg.slack.com
+
+cleanup && cd $HOME/Temporary
+
+echo
+echo Signal!
+echo Telegram!
+echo Physikalische Inbox!
+echo Digitale Inbox!
+echo Browser leeren!
+echo $HOME/Temporary leeren!
+echo
+
+if [[ $1 != "--no-phone" ]]; then
+    echo "Delete photos on phone? (y/N)"
+    read answer
+    if [[ $answer == y ]]; then
+    adb shell rm -r sdcard/DCIM/Camera
+    fi
+fi
