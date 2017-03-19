@@ -1,13 +1,18 @@
 #!/usr/bin/env sh
+#
 # Screen layout switcher.  Sometimes I want to use an external screen.
 
 
 function resetWM {
+    killall compton
+
     $HOME/.fehbg
 
     killall dzen2
 
     xmonad --restart
+
+    compton -b
 }
 
 
