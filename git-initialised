@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+
+cd $1
+
+git status &> /dev/null
+exitCode=$?
+
+cd -
+
+exit $exitCode
