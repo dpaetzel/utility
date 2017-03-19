@@ -4,9 +4,11 @@
 
 set -e
 
+dir=$(realpath --relative-to $HOME $(pwd))
+
 typeset -A remotes
-remotes=( seagate "/run/media/$USER/SEAGATE-MWQ"
-          zeno    "/run/media/$USER/ZENO" )
+remotes=( seagate "/run/media/$USER/SEAGATE-MWQ/$dir"
+          zeno    "/run/media/$USER/ZENO/$dir" )
 
 function inAnnex {
     git annex status &> /dev/null
