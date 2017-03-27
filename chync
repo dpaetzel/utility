@@ -1,0 +1,188 @@
+#!/usr/bin/env zsh
+
+# TODO also check with mr files (“what is automatically synced, what isn't?”)
+
+IFS=$'\n'
+
+# Parse command line arguments
+
+typeset -a hidden
+
+typeset -A depth
+
+typeset -A relativeTo
+
+zparseopts a=hidden -hidden=hidden d:=depth -depth:=depth -relative-to:=relativeTo v=verbose -verbose=verbose h=help -help=help
+
+[[ -z $depth ]] && depth=2
+[[ -z $relativeTo ]] && relativeTo=$HOME
+
+function printUsage {
+    echo "Usage: chync [OPTION]..."
+    column -t -s "	" <<EOF
+	-a, --hidden	Whether to include hidden (dot-prefixed) directories [default: ]
+	-d, --depth	How deep to recurse [default: 2]
+	--relative-to	Output path should be relative to this directory[default: $HOME]
+	-v, --verbose	Be verbose
+	-h, --help	Print this help
+EOF
+}
+
+function printConfig {
+    echo "--hidden: $hidden"
+    echo "--depth: $depth"
+    echo "--relative-to: $relativeTo"
+    echo "--verbose: $verbose"
+    echo "--help: $help"
+}
+
+function gitInitialised {
+    git status &> /dev/null
+    exitCode=$?
+
+    return $exitCode
+}
+
+function lastSync {
+    remote=$1
+
+    currentBranch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
+    ref="$remote/synced/$currentBranch"
+
+    last=$(stat -c %y .git/refs/remotes/$ref 2> /dev/null | sed -r "s/\..*$//")
+    if [[ $last = "" ]]; then
+        last="never"
+    fi
+
+    echo "$last"
+}
+
+function unsynced {
+    remote=$1
+
+    currentBranch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
+    ref="$remote/synced/$currentBranch"
+
+    # lastSyncedCommit=$(git rev-parse $ref 2> /dev/null)
+    git rev-list "HEAD...$ref" --ignore-submodules --count 2> /dev/null
+}
+
+function inMrconfig {
+    repoPath=$1
+
+    mr run true | grep "^mr run: $(realpath $repoPath)$" &> /dev/null
+}
+
+function printRemoteStatus {
+    remote=$1
+
+    url=$(git remote get-url $remote)
+    spaces=$((100 - ${#remote}))
+
+    syncStatus=""
+
+    num=$(unsynced $remote)
+    if [[ $num -gt 0 ]]; then
+        if [[ $num -gt 9 ]]; then
+            syncStatus="${syncStatus}+"
+        else
+            syncStatus="$syncStatus$num"
+        fi
+    else
+        syncStatus="$syncStatus "
+    fi
+
+    if [[ $(lastSync $remote) == "never" ]]; then
+        syncStatus="${syncStatus}N"
+    else
+        syncStatus="${syncStatus} "
+    fi
+
+    printf "    %3s %s\n" "$syncStatus" "$remote → $url"
+}
+
+function printRepositoryStatus {
+    repoPath=$1
+
+    repoStatus=""
+
+    if inMrconfig $repoPath; then
+        repoStatus="${repoStatus}M"
+    # elif shouldBeInMrconfig $remote; then
+    #     repoStatus="${repoStatus}!"
+    else
+        repoStatus="${repoStatus} "
+    fi
+
+    pushd $repoPath
+
+    if gitInitialised; then
+        unsyncedRemotes=0
+
+        for r in $(git remote); do
+            if [[ ! $(unsynced $r) -eq 0 ]]; then
+                unsyncedRemotes=$((unsyncedRemotes + 1))
+            fi
+        done
+
+        if [[ $unsyncedRemotes -gt 9 ]]; then
+            repoStatus="${repoStatus}+"
+        else
+            repoStatus="${repoStatus}$unsyncedRemotes"
+        fi
+
+        printf "%2s %s\n" "$repoStatus" "$repoPath"
+
+        if [[ -n verbose ]]; then
+            for r in $(git remote); do
+                printRemoteStatus $r
+            done
+        fi
+    else
+        printf "%2s %s\n" "$repoStatus" "$repoPath"
+    fi
+
+    popd
+}
+
+printRepositoryStatus $1
+
+exit 0
+
+
+function checkSyncStatus {
+    remainingDepth=$1
+
+    git status &> /dev/null
+    exitCode=$?
+
+    # If current directory already under version control
+    if [[ $exitCode -eq 0 ]]; then
+        printSyncStatus
+    else
+        # Search for folders in current directory
+        if [[ -n $hidden ]]; then
+            dirs=( $(find . -maxdepth 1 -type d) )
+        else
+            dirs=( $(find . -maxdepth 1 -type d -and -not -name '.*') )
+        fi
+
+        for dir in $dirs; do
+            pushd "$dir" > /dev/null
+
+            checkSyncStatus $(($remainingDepth - 1))
+
+            popd > /dev/null
+        done
+    fi
+}
+
+[[ -n $help ]] && printUsage && exit 0
+
+[[ -n $verbose ]] && printConfig
+
+checkSyncStatus $depth
+
+# unused stuff
+# changeDates=( $(find .git/refs/remotes -maxdepth 2 -iname git-annex -printf "%P %A@ " | sed -r "s/\/git-annex//g;s/\.[[:digit:]]*//g") )
+# $(git rev-list "HEAD...$r/$currentBranch" --ignore-submodules --count &> /dev/null) -gt 0 ]]
