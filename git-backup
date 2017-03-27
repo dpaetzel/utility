@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+
+set -e
+
+filepath=$1
+backupPath=$(realpath --relative-to $HOME $filepath)
+
+git clone $filepath $backupPath
+
+cd $backupPath
+
+git annex init
+git annex group . backup
+git annex sync --content
+
+cd -
