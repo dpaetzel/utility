@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# setxkbmap -layout de -variant de
+# xdotool type "¯\_(ツ)_/¯"
+# setxkbmap -layout de -variant neo
+
+printf "¯\_(ツ)_/¯" | xclip
