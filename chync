@@ -193,11 +193,34 @@ function syncStatusRecurse {
     fi
 }
 
+
+function syncStatus {
+    for repo in $(mrControlled); do
+        pushd "$repo"
+
+        printRepositoryStatus .
+
+        popd
+    done
+}
+
+
+function mrControlled {
+    mr run true | sed -r "s/^mr run: (.*)$/\1/" | grep -v "^$" | grep -v "^finished (.* ok)$"
+}
+
+
+
 [[ -n $verbose ]] && printConfig
 
 [[ -n $help ]] && printUsage && exit 0
 
-[[ -n $depth ]] && syncStatusRecurse $depth && exit 0
+if [[ -n $depth ]]; then
+    syncStatusRecurse $depth
+    exit 0
+else
+    syncStatus
+fi
 
 # unused stuff
 # changeDates=( $(find .git/refs/remotes -maxdepth 2 -iname git-annex -printf "%P %A@ " | sed -r "s/\/git-annex//g;s/\.[[:digit:]]*//g") )
