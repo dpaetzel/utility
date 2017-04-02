@@ -2,9 +2,10 @@
 
 IFS=$'\n'
 
-# How often each encountered remote was unsynced ($remotes[bla] == 1 means that
-# remote bla was unsynced *once*, not by *one commit*)
+# TODO document p-prefix
 
+# How often each encountered remote was pUnsynced ($remotes[bla] == 1 means that
+# remote bla was pUnsynced *once*, not by *one commit*)
 typeset -A remotes
 
 # Parse command line arguments
@@ -26,7 +27,8 @@ zparseopts\
 
 [[ -z $relativeTo ]] && relativeTo=$HOME
 
-function printUsage {
+
+function pUsage {
     echo "Usage: chync [OPTION]..."
     column -t -s "|" <<EOF
 |-a, --hidden|Whether to include hidden (dot-prefixed) directories if --depth is set [default: ]
@@ -37,7 +39,8 @@ function printUsage {
 EOF
 }
 
-function printConfig {
+
+function pConfig {
     echo "--hidden: $hidden"
     echo "--depth: $depth"
     echo "--relative-to: $relativeTo"
@@ -45,6 +48,9 @@ function printConfig {
     echo "--help: $help"
 }
 
+
+# Check whether there is an initialised git repository in the current working
+# directory.
 function gitInitialised {
     git status &> /dev/null
     exitCode=$?
@@ -52,7 +58,11 @@ function gitInitialised {
     return $exitCode
 }
 
-function lastSync {
+
+# Print the time and date (in YYYY-MM-DD HH:MM:SS format) of the last git-annex
+# synchronisation of the given remote.  If it was never synced at all (e.g. b/c
+# git-annex is not initialised), "never" is printed.
+function pLastAnnexSync {
     remote=$1
 
     currentBranch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
@@ -66,7 +76,9 @@ function lastSync {
     echo "$last"
 }
 
-function unsynced {
+
+# Print the number of commits that were not yet synced to the given remote.
+function pUnsynced {
     remote=$1
 
     currentBranch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
@@ -76,20 +88,38 @@ function unsynced {
     git rev-list "HEAD...$ref" --ignore-submodules --count 2> /dev/null
 }
 
-function inMrconfig {
+
+# Print the absolute paths to all repositories controlled by myrepos (only using
+# the default mrconfig file, usually $HOME/.mrconfig).
+function pMrControlled {
+    mr run true | sed -r "s/^mr run: (.*)$/\1/" | grep -v "^$" | grep -v "^finished (.* ok)$"
+}
+
+
+# Whether the given repository is registered in mr.
+function isMrControlled {
     repoPath=$1
 
     mr run true | grep "^mr run: $(realpath $repoPath)$" &> /dev/null
 }
 
-function printRemoteStatus {
+
+# Print the current working directory's path relative to $relativeTo.
+function pRelativePath {
+    realpath --relative-to=$relativeTo $(pwd)
+}
+
+
+# Print the statuses of the remotes of the repository that controls the current
+# directory.
+function pRemoteStatus {
     remote=$1
 
     url=$(git remote get-url $remote)
 
     syncStatus=""
 
-    num=$(unsynced $remote)
+    num=$(pUnsynced $remote)
     if [[ $num -gt 0 ]]; then
         # Remember that this remote was unsynced once more
         remotes[$remote]=$(($remotes[$remote] + 1))
@@ -103,7 +133,7 @@ function printRemoteStatus {
         syncStatus="$syncStatus "
     fi
 
-    if [[ $(lastSync $remote) == "never" ]]; then
+    if [[ $(pLastAnnexSync $remote) == "never" ]]; then
         syncStatus="${syncStatus}N"
     else
         syncStatus="${syncStatus} "
@@ -112,12 +142,12 @@ function printRemoteStatus {
     printf "    %3s %s\n" "$syncStatus" "$remote → $url"
 }
 
-function printRepositoryStatus {
+function pRepositoryStatus {
     repoPath=$1
 
     repoStatus=""
 
-    if inMrconfig $repoPath; then
+    if isMrControlled $repoPath; then
         repoStatus="${repoStatus}M"
     # elif shouldBeInMrconfig $remote; then
     #     repoStatus="${repoStatus}!"
@@ -131,7 +161,7 @@ function printRepositoryStatus {
         unsyncedRemotes=0
 
         for r in $(git remote); do
-            if [[ ! $(unsynced $r) -eq 0 ]]; then
+            if [[ ! $(pUnsynced $r) -eq 0 ]]; then
                 unsyncedRemotes=$((unsyncedRemotes + 1))
             fi
         done
@@ -149,23 +179,18 @@ function printRepositoryStatus {
             repoStatus="${repoStatus}$unsyncedRemotes"
         fi
 
-        printf "%3s %s\n" "$repoStatus" $(relativePath)
+        printf "%3s %s\n" "$repoStatus" $(pRelativePath)
 
         if [[ -n verbose ]]; then
             for r in $(git remote); do
-                printRemoteStatus $r
+                pRemoteStatus $r
             done
         fi
     else
-        printf "%3s %s\n" "$repoStatus" $(relativePath)
+        printf "%3s %s\n" "$repoStatus" $(pRelativePath)
     fi
 
     popd
-}
-
-
-function relativePath {
-    realpath --relative-to=$relativeTo $(pwd)
 }
 
 
@@ -174,7 +199,7 @@ function syncStatusRecurse {
 
     # If current directory already under version control
     if gitInitialised; then
-        printRepositoryStatus .
+        pRepositoryStatus .
     else
         # Search for folders in current directory
         if [[ -n $hidden ]]; then
@@ -195,25 +220,20 @@ function syncStatusRecurse {
 
 
 function syncStatus {
-    for repo in $(mrControlled); do
+    for repo in $(pMrControlled); do
         pushd "$repo"
 
-        printRepositoryStatus .
+        pRepositoryStatus .
 
         popd
     done
 }
 
 
-function mrControlled {
-    mr run true | sed -r "s/^mr run: (.*)$/\1/" | grep -v "^$" | grep -v "^finished (.* ok)$"
-}
 
+[[ -n $verbose ]] && pConfig
 
-
-[[ -n $verbose ]] && printConfig
-
-[[ -n $help ]] && printUsage && exit 0
+[[ -n $help ]] && pUsage && exit 0
 
 if [[ -n $depth ]]; then
     syncStatusRecurse $depth
