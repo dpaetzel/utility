@@ -1,12 +1,33 @@
 #!/usr/bin/env zsh
+#
+# chync - Check synchronisation status of repositories.
+#
+# Copyright ⓒ 2017-∞ David Pätzel
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# Note: Functions prefixed with “p” print something.
+
 
 IFS=$'\n'
 
-# TODO document p-prefix
 
 # How often each encountered remote was pUnsynced ($remotes[bla] == 1 means that
-# remote bla was pUnsynced *once*, not by *one commit*)
+# remote bla was pUnsynced *once*, not by *one commit*).  Ugly.  State.  Whatever.
 typeset -A remotes
+
 
 # Parse command line arguments
 
@@ -23,7 +44,8 @@ zparseopts\
   d:=depth -depth:=depth\
   -relative-to:=relativeTo\
   v=verbose -verbose=verbose\
-  h=help -help=help
+  h=help -help=help\
+  -long-help=longHelp
 
 [[ -z $relativeTo ]] && relativeTo=$HOME
 
@@ -36,6 +58,23 @@ function pUsage {
 |--relative-to FILE|Output path should be relative to FILE [default: $HOME]
 |-v, --verbose|Be verbose
 |-h, --help|Print this help
+|--long-help|Print more detailed help
+EOF
+}
+
+
+function pLongUsage {
+    pUsage
+    echo
+    cat <<EOF
+* What does it show?
+** Repository status
+   - M: under control of $HOME myrepo configuration
+   - !: uncommited changes present
+   - 3: need to sync changes to three remotes (“+” means more than nine remotes)
+** Remote status:
+   - 2: two commits unsynced to this remote (“+” means more than nine commits)
+   - N: never synced to this remote
 EOF
 }
 
@@ -89,10 +128,10 @@ function pUnsynced {
 }
 
 
-# Print the absolute paths to all repositories controlled by myrepos (only using
-# the default mrconfig file, usually $HOME/.mrconfig).
+# Print the absolute paths to all repositories controlled by myrepos from the
+# $HOME directory.
 function pMrControlled {
-    mr run true | sed -r "s/^mr run: (.*)$/\1/" | grep -v "^$" | grep -v "^finished (.* ok)$"
+    mr --directory $HOME run true | sed -r "s/^mr run: (.*)$/\1/" | grep -v "^$" | grep -v "^finished (.* ok)$"
 }
 
 
@@ -100,7 +139,7 @@ function pMrControlled {
 function isMrControlled {
     repoPath=$1
 
-    mr run true | grep "^mr run: $(realpath $repoPath)$" &> /dev/null
+    pMrControlled | grep "^$(realpath $repoPath)$" &> /dev/null
 }
 
 
@@ -117,45 +156,43 @@ function pRemoteStatus {
 
     url=$(git remote get-url $remote)
 
-    syncStatus=""
+    pSyncStatus=""
 
     num=$(pUnsynced $remote)
     if [[ $num -gt 0 ]]; then
-        # Remember that this remote was unsynced once more
+        # Remember that this remote was unsynced here, too. Dirty dirty state >.<
         remotes[$remote]=$(($remotes[$remote] + 1))
 
         if [[ $num -gt 9 ]]; then
-            syncStatus="${syncStatus}+"
+            pSyncStatus="${pSyncStatus}+"
         else
-            syncStatus="$syncStatus$num"
+            pSyncStatus="$pSyncStatus$num"
         fi
     else
-        syncStatus="$syncStatus "
+        pSyncStatus="$pSyncStatus "
     fi
 
     if [[ $(pLastAnnexSync $remote) == "never" ]]; then
-        syncStatus="${syncStatus}N"
+        pSyncStatus="${pSyncStatus}N"
     else
-        syncStatus="${syncStatus} "
+        pSyncStatus="${pSyncStatus} "
     fi
 
-    printf "    %3s %s\n" "$syncStatus" "$remote → $url"
+    printf "    %3s %s\n" "$pSyncStatus" "$remote → $url"
 }
 
-function pRepositoryStatus {
-    repoPath=$1
 
+# Print the status of the repository that controls the current directory.
+function pRepositoryStatus {
     repoStatus=""
 
-    if isMrControlled $repoPath; then
+    if isMrControlled $(pwd); then
         repoStatus="${repoStatus}M"
     # elif shouldBeInMrconfig $remote; then
     #     repoStatus="${repoStatus}!"
     else
         repoStatus="${repoStatus} "
     fi
-
-    pushd $repoPath
 
     if gitInitialised; then
         unsyncedRemotes=0
@@ -189,17 +226,18 @@ function pRepositoryStatus {
     else
         printf "%3s %s\n" "$repoStatus" $(pRelativePath)
     fi
-
-    popd
 }
 
 
-function syncStatusRecurse {
+# Print the synchronisation status of the current directory.  If it is not under
+# version control (currently only git is checked), recurse up to the given
+# remaining depth to find repositories.
+function pSyncStatusRecurse {
     remainingDepth=$1
 
     # If current directory already under version control
     if gitInitialised; then
-        pRepositoryStatus .
+        pRepositoryStatus
     else
         # Search for folders in current directory
         if [[ -n $hidden ]]; then
@@ -211,7 +249,7 @@ function syncStatusRecurse {
         for dir in $dirs; do
             pushd "$dir"
 
-            syncStatusRecurse $(($remainingDepth - 1))
+            pSyncStatusRecurse $(($remainingDepth - 1))
 
             popd
         done
@@ -219,28 +257,35 @@ function syncStatusRecurse {
 }
 
 
-function syncStatus {
+# Print the synchronisation status of all the repositories controlled by myrepos
+# from the $HOME directory.
+function pSyncStatus {
     for repo in $(pMrControlled); do
         pushd "$repo"
 
-        pRepositoryStatus .
+        pRepositoryStatus
 
         popd
     done
 }
 
 
-
 [[ -n $verbose ]] && pConfig
 
 [[ -n $help ]] && pUsage && exit 0
 
+[[ -n $longHelp ]] && pLongUsage && exit 0
+
 if [[ -n $depth ]]; then
-    syncStatusRecurse $depth
-    exit 0
+    pSyncStatusRecurse $depth
 else
-    syncStatus
+    pSyncStatus
 fi
+
+echo "Remote-wise summary (“How many repositories have unsynced changes for these remotes?”):"
+for k in "${(@k)remotes}"; do
+    printf "  %s: %s\n" $k $remotes[$k]
+done
 
 # unused stuff
 # changeDates=( $(find .git/refs/remotes -maxdepth 2 -iname git-annex -printf "%P %A@ " | sed -r "s/\/git-annex//g;s/\.[[:digit:]]*//g") )
