@@ -21,4 +21,4 @@ else
     file=$HOME/.conkyrc-$profile
 fi
 echo "Running conky -c $file"
-conky -c $file
+conky -c $file &> /dev/null

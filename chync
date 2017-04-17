@@ -205,9 +205,9 @@ function pRepositoryStatus {
 
         # Whether there are uncommitted changes
         if git diff --quiet; then
-            repoStatus="${repoStatus}!"
-        else
             repoStatus="${repoStatus} "
+        else
+            repoStatus="${repoStatus}!"
         fi
 
         if [[ $unsyncedRemotes -gt 9 ]]; then
