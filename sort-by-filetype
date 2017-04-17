@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+dir=$1
+
+find "$dir"\
+     -type f\
+     -exec file --mime-type {} \;\
+    | sed -r 's/^(.*): ([^:]*$)/mkdir -p "\2" \&\& cp "\1" "\2"/'\
+    # add a log message if the previous sed command went wrong
+    | sed -r 's/^([^m][^k][^d][^i][^r][^ ][^-][^p].*)$/echo \0 >> $(date -I)-sort-by-filetype.log/'
