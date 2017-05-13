@@ -32,12 +32,12 @@ function fixRemote {
 function fixRemotes {
     for k in "${(@k)remotes}"; do
         if inAnnex; then
-            remotePath="$remotes[$k]/$userPath"
+            remotePath="$remotes[$k]"
         else
-            remotePath="$remotes[$k]/$userPath.git"
+            remotePath="$remotes[$k].git"
         fi
 
-        fixRemote $k $remotes[$k]
+        fixRemote $k $remotePath
     done
 }
 

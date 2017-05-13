@@ -15,7 +15,7 @@ for f in $(ls); do
         cd $temporary
         if [[ -e "$f" ]]; then
             printf "Archiving older versions of $f… "
-            archiveFilename=$(mktemp -p . "$f-XXXXX")
+            archiveFilename=$(mktemp -u -d -p . "$f-XXXXX")
             mv "$f" "$archiveFilename" 2&> /dev/null
         fi
         cd $HOME

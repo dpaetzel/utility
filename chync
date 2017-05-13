@@ -21,6 +21,10 @@
 # Note: Functions prefixed with “p” print something.
 
 
+# TODO show annex group/wanted expressions (client, backup …)
+# TODO list files that are excluded from backup (e.g. via gitignore)?
+
+
 IFS=$'\n'
 
 
