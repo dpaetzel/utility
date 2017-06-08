@@ -1,0 +1,76 @@
+#!/usr/bin/env sh
+
+
+if [[ -z $2 ]]; then
+    min=25
+else
+    min=$2
+fi
+
+
+pidFile=/tmp/pomodoro.pid
+
+
+secs=$(( 60 * $min))
+
+
+case $1 in
+    start )
+        if [[ -f $pidFile ]]; then
+            echo "Aborting previous pomodoro"
+            kill $(cat /tmp/pomodoro.pid)
+            rm $pidFile
+        fi
+
+        sleep $secs &&\
+            notify-send -u critical 'Take a break' 'You should take a break now!' &&\
+            rm $pidFile &
+
+        echo $! > $pidFile
+        echo $(($(date +%s) + $secs)) >> $pidFile
+
+        echo "Started new pomodoro at $(date +%H:%M) ($min min)"
+        ;;
+
+    status )
+
+        if [[ -f $pidFile ]]; then
+            end=$(tail -1 $pidFile)
+
+            left=$(( ($end - $(date +%s)) / 60 ))
+
+            if [[ $left -ge 0 ]]; then
+                echo "Pomodoro has $left min left"
+            else
+                echo "Pomodoro over since $((- $left)) min"
+            fi
+        else
+            echo "No pomodoro running!"
+        fi
+
+        ;;
+
+    conky )
+
+        if [[ -f $pidFile ]]; then
+            end=$(tail -1 $pidFile)
+
+            left=$(( ($end - $(date +%s)) / 60 ))
+
+            echo "\${color red}$left min\$color"
+        else
+            echo "Nope"
+        fi
+
+        ;;
+
+    stop )
+        if [[ -f $pidFile ]]; then
+            kill $(head -1 $pidFile)
+            rm $pidFile
+            echo "Stopped pomodoro at $(date +%H:%M)"
+        else
+            echo "No pomodoro running!"
+        fi
+        ;;
+esac

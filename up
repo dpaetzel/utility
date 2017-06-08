@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+
+sudo nix-collect-garbage --delete-older-than 60d
+
+
+sudo nixos-rebuild switch --keep-going --upgrade
