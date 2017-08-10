@@ -1,0 +1,60 @@
+#!/usr/bin/env zsh
+#
+# phone - Diverse utilities for my Nexus 5X.
+#
+# Copyright ⓒ 2017-∞ David Pätzel
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# unneeded if proper udev rules are set up
+function fixADB {
+    if adb kill-server; then
+        sudo adb start-server
+    else
+        adb devices
+    fi
+}
+
+
+function getPhotos {
+    dir=$(mktemp --dry-run --directory --tmpdir=. $(date -I)-photos-XXXX)
+
+    adb pull sdcard/DCIM/Camera $dir
+    rm $dir/thumbnails &> /dev/null
+
+    if [[ -z $(ls $dir) ]]; then
+        echo "No photos to archive"
+        rm -rf $dir
+    else
+        echo "Archiving photos on phone…"
+        if adb shell "test -d sdcard/DCIM/Archive"; then
+            echo Archive directory already existed, appending
+        elif adb shell "test \! -e sdcard/DCIM/Archive"; then
+            echo Archive directory did not exist, creating
+            adb shell "mkdir sdcard/DCIM/Archive/"
+        else
+            echo Archive is not a directory, aborting!
+            return 1
+        fi
+        adb shell "mv sdcard/DCIM/Camera/* sdcard/DCIM/Archive/"
+    fi
+}
+
+
+case $1 in
+    photos)
+        getPhotos
+        ;;
+esac
