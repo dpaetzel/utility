@@ -28,11 +28,21 @@ case $1 in
         reconky
         ;;
     work)
-        # TODO should probably differentiate between hostnames here (this is only possible for sokrates)
-        xrandr --output VIRTUAL1 --off --output eDP1 --primary --mode 1920x1080 --pos 0x900 --rotate normal --output DP1 --off --output DP2-1 --off --output DP2-2 --mode 2560x1440 --pos 1920x0 --rotate normal --output DP2-3 --off --output HDMI2 --off --output HDMI1 --off --output DP2 --off
-        resetWM
-        reconky work
+        case $2 in
+            single)
+                # TODO should probably differentiate between hostnames here (e.g. this is only possible for sokrates)
+                xrandr --output VIRTUAL1 --off --output eDP1 --primary --mode 1920x1080 --pos 0x900 --rotate normal --output DP1 --off --output DP2-1 --off --output DP2-2 --off --output DP2-3 --off --output HDMI2 --off --output HDMI1 --off --output DP2 --off
+                resetWM
+                reconky
+                ;;
+            *)
+                xrandr --output VIRTUAL1 --off --output eDP1 --primary --mode 1920x1080 --pos 0x900 --rotate normal --output DP1 --off --output DP2-1 --off --output DP2-2 --mode 2560x1440 --pos 1920x0 --rotate normal --output DP2-3 --off --output HDMI2 --off --output HDMI1 --off --output DP2 --off
+                resetWM
+                reconky work
+                ;;
+        esac
         ;;
+
     *)
         xrandr --output HDMI1 --off --output LVDS1 --mode 1366x768 --pos 0x0 --rotate normal --output VIRTUAL1 --off --output DP1 --off --output VGA1 --off
         resetWM
