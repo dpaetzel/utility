@@ -7,8 +7,10 @@ set -e
 dir=$(realpath --relative-to $HOME $(pwd))
 
 typeset -A remotes
-remotes=( seagate "/run/media/$USER/SEAGATE-MWQ/$dir"
-          zeno    "/run/media/$USER/ZENO/$dir" )
+remotes=( seagate           "/run/media/$USER/SEAGATE-MWQ/$dir"
+          zeno              "/run/media/$USER/ZENO/$dir"
+          $(the-other-one)  "$(the-other-one):$dir"
+        )
 
 function inAnnex {
     git annex status &> /dev/null
@@ -48,7 +50,7 @@ function fixRemotes {
     for k in "${(@k)remotes}"; do
         if inAnnex; then
             remotePath="$remotes[$k]"
-        else
+        elif [[ ! $k == $(the-other-one) ]]; then
             remotePath="$remotes[$k].git"
         fi
 
