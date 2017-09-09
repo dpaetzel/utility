@@ -112,7 +112,7 @@ function pLastAnnexSync {
     ref="$remote/synced/$currentBranch"
 
     last=$(stat -c %y .git/refs/remotes/$ref 2> /dev/null | sed -r "s/\..*$//")
-    if [[ $last = "" ]]; then
+    if [[ $last == "" ]]; then
         last="never"
     fi
 
@@ -135,7 +135,7 @@ function pUnsynced {
 # Print the absolute paths to all repositories controlled by myrepos from the
 # $HOME directory.
 function pMrControlled {
-    mr --directory $HOME run true | sed -r "s/^mr run: (.*)$/\1/" | grep -v "^$" | grep -v "^finished (.* ok)$"
+    mr --directory $HOME --force run true | sed -r "s/^mr run: (.*)$/\1/" | grep -v "^$" | grep -v "^finished (.* ok)$"
 }
 
 
