@@ -3,7 +3,7 @@
 # $HOME/Temporary).
 
 # allowed=( Bin Buchhaltung Code Desktop Documents Dokumente Dropbox In.org Literatur Mail Music Pictures Projects Temporary TODO.org Videos )
-allowed=( Dropbox Code Mail Temporary $(grep --no-filename --color -i -E '^\[.*\]' .mrconfig .my-github.mrconfig .others-github.mrconfig .private.mrconfig | sed -r 's/\[(.*)\]/\1/' | paste -d ' ' -s) )
+allowed=( Dropbox Code Mail Temporary $(grep --no-filename --color -i -E '^\[.*\]' .mrconfig .git.mrconfig .git-annex.mrconfig | sed -r 's/\[(.*)\]/\1/' | paste -d ' ' -s) )
 temporary=Temporary
 
 currentDir=$(pwd)
