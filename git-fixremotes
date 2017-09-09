@@ -12,10 +12,6 @@ remotes=( seagate           "/run/media/$USER/SEAGATE-MWQ/$dir"
           $(the-other-one)  "$(the-other-one):$dir"
         )
 
-function inAnnex {
-    git annex status &> /dev/null
-}
-
 function addToAll {
     url=$1
 
@@ -48,7 +44,7 @@ function fixRemote {
 
 function fixRemotes {
     for k in "${(@k)remotes}"; do
-        if inAnnex; then
+        if in-annex; then
             remotePath="$remotes[$k]"
         elif [[ ! $k == $(the-other-one) ]]; then
             remotePath="$remotes[$k].git"

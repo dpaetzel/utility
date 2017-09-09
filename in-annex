@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+#
+# Checks whether we are in a repository under git-annex control.
+
+
+function inAnnex {
+    git annex status &> /dev/null
+}
+
+
+inAnnex
