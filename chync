@@ -176,10 +176,15 @@ function pRemoteStatus {
         pSyncStatus="$pSyncStatus "
     fi
 
-    if [[ $(pLastAnnexSync $remote) == "never" ]]; then
-        pSyncStatus="${pSyncStatus}N"
-    else
-        pSyncStatus="${pSyncStatus} "
+    # Only if under git-annex control, print a status when it was last synced with git-annex.
+    if in-annex; then
+        if [[ $(pLastAnnexSync $remote) == "never" ]]; then
+            # We count a never synced remote as unsynced, too.
+            # remotes[$remote]=$(($remotes[$remote] + 1))
+            pSyncStatus="${pSyncStatus}N"
+        else
+            pSyncStatus="${pSyncStatus} "
+        fi
     fi
 
     printf "    %3s %s\n" "$pSyncStatus" "$remote → $url"
