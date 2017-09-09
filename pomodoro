@@ -15,16 +15,18 @@ secs=$(( 60 * $min))
 
 
 case $1 in
-    start )
+    start | s )
         if [[ -f $pidFile ]]; then
             echo "Aborting previous pomodoro"
-            kill $(cat /tmp/pomodoro.pid)
+            kill $(head -1 $pidFile)
             rm $pidFile
         fi
 
         sleep $secs &&\
-            notify-send -u critical 'Take a break' 'You should take a break now!' &&\
-            rm $pidFile &
+            { mpv $HOME/.pomodoro-sound.mp3 2&> /dev/null &
+              notify-send -u critical 'Take a break' 'You should take a break now!';
+              rm $pidFile;
+            } &
 
         echo $! > $pidFile
         echo $(($(date +%s) + $secs)) >> $pidFile
@@ -51,7 +53,6 @@ case $1 in
         ;;
 
     conky )
-
         if [[ -f $pidFile ]]; then
             end=$(tail -1 $pidFile)
 
