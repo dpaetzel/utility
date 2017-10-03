@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+
+backupFolder="$HOME/Backup"
+
+
+name="$backupFolder/$(date -I) Mail.tar.bz2"
+
+
+apack "$name" $HOME/Mail
+
+
+cd $backupFolder
+
+
+git annex add "$name"
+
+
+git commit -m "Add another automated mail backup"
+
+
+cd -
