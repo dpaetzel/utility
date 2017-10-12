@@ -7,11 +7,24 @@ set -e
 dir=$(realpath --relative-to $HOME $(pwd))
 
 typeset -A remotes
-remotes=( seagate "/run/media/$USER/SEAGATE-MWQ/$dir"
-          zeno    "/run/media/$USER/ZENO/$dir" )
+remotes=( seagate           "/run/media/$USER/SEAGATE-MWQ/$dir"
+          zeno              "/run/media/$USER/ZENO/$dir"
+          $(the-other-one)  "$(the-other-one):$dir"
+        )
 
-function inAnnex {
-    git annex status &> /dev/null
+function addToAll {
+    url=$1
+
+    if [[ $(git remote -v | grep "^all.*$url (push)") ]]; then
+        echo "Remote url $url to remote 'all' already existing"
+    elif [[ $(git remote set-url --add --push all $url &> /dev/null) ]]; then
+        echo "Added remote url $url to remote 'all'"
+    elif git remote add all $url &> /dev/null; then
+        git remote set-url --add --push all $url &> /dev/null
+        echo "Created new remote 'all' with url $url"
+    else
+        echo "Could not add url $url to remote 'all'"
+    fi
 }
 
 function fixRemote {
@@ -20,24 +33,25 @@ function fixRemote {
 
     if [[ ! $(git remote get-url $name 2> /dev/null) == $url ]]; then
         if git remote add $name "$url" &> /dev/null; then
-            echo "Added remote $name at $url"
+            echo "Added remote '$name' at $url"
         elif git remote set-url $name "$url" &> /dev/null; then
-            echo "Reset remote $name to url $url"
+            echo "Reset remote '$name' to url $url"
         else
-            echo "Could not fix remote $name at $url"
+            echo "Could not fix remote '$name' at $url"
         fi
     fi
 }
 
 function fixRemotes {
     for k in "${(@k)remotes}"; do
-        if inAnnex; then
+        if in-annex; then
             remotePath="$remotes[$k]"
-        else
+        elif [[ ! $k == $(the-other-one) ]]; then
             remotePath="$remotes[$k].git"
         fi
 
         fixRemote $k $remotePath
+        addToAll $remotePath
     done
 }
 
