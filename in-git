@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+#
+# Checks whether the given directory is a git repository. If no directory is
+# given, the current directory is implied.
+
+
+if [[ -n $1 ]]; then
+    dir=$1
+else
+    dir=$(pwd)
+fi
+
+
+pushd $dir &> /dev/null
+
+
+git status &> /dev/null
+result=$?
+
+
+popd &> /dev/null
+
+
+exit $result
