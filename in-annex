@@ -1,11 +1,24 @@
 #!/usr/bin/env sh
 #
-# Checks whether we are in a repository under git-annex control.
+# Checks whether the given directory is a git repository under git-annex
+# control.  If no directory is given, the current directory is implied.
 
 
-function inAnnex {
-    git annex status &> /dev/null
-}
+if [[ -n $1 ]]; then
+    dir=$1
+else
+    dir=$(pwd)
+fi
 
 
-inAnnex
+pushd $dir &> /dev/null
+
+
+git annex status &> /dev/null
+result=$?
+
+
+popd &> /dev/null
+
+
+exit $result

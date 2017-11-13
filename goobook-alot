@@ -20,13 +20,13 @@ delimiter=::
 # Set to something with non-zero length, to get some debugging output.
 verbose=
 
-function log {
-    if [[ -n $verbose ]]; then
-        echo $@
+log() {
+    if test -n $verbose; then
+        echo "$@"
     fi
 }
 
-function isGroup {
+isGroup() {
     countAts=$(grep -o @ <<< $1 | wc -l)
     log This has $countAts @s.
     countCommas=$(grep -o , <<< $1 | wc -l)

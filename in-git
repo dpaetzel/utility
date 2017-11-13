@@ -1,18 +1,24 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env sh
+#
+# Checks whether the given directory is a git repository. If no directory is
+# given, the current directory is implied.
 
 
 if [[ -n $1 ]]; then
-    cd $1
+    dir=$1
+else
+    dir=$(pwd)
 fi
+
+
+pushd $dir &> /dev/null
 
 
 git status &> /dev/null
-exitCode=$?
+result=$?
 
 
-if [[ -n $1 ]]; then
-    cd -
-fi
+popd &> /dev/null
 
 
-exit $exitCode
+exit $result
