@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+
+usage() {
+    echo "	-i	output repositories instead of non-repositories"
+    echo "	-h	show this help"
+}
+
+
+if [[ $1 == -h ]]; then
+    usage
+    exit 0
+fi
+
+
+if [[ $1 == -i ]]; then
+    find . -maxdepth 1 -type d -exec in-git '{}' ';' -print
+else
+    find . -maxdepth 1 -type d -exec in-git '{}' ';' -prune -o -print
+fi
