@@ -1,0 +1,6 @@
+#!/usr/bin/env fish
+
+
+killall autocutsel
+autocutsel -selection PRIMARY -f
+autocutsel -selection CLIPBOARD -f
