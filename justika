@@ -1,0 +1,39 @@
+#!/usr/bin/env fish
+#
+# Required: curl, pdftotext (from poppler-utils), cat, grep, sed
+
+
+set temp_pdf (mktemp)
+curl --silent --output $temp_pdf http://justika.de/Speisekarten/Justika_Wochenkarte_aktuell.pdf
+
+
+if file $temp_pdf | grep PDF > /dev/null
+
+
+    set temp_txt (mktemp)
+    pdftotext $temp_pdf $temp_txt
+
+
+    set days '(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)'
+
+
+    cat $temp_txt \
+    # discard heading
+    | grep -v 'Kalenderwoche' \
+    # discard footer
+    | sed -rn '/Täglich wechselnde Suppe/q;p' \
+    # discard ingredients footnotes and prices
+    | sed -r "/$days/n;s/([[:digit:]],?)+( €)?//g" \
+    # discard empty lines
+    | grep -v '^ *$' \
+    # add bullet points
+    | sed -r "/$days/n;s/^/• /"
+
+
+else
+
+
+    echo "PDF file could not be downloaded"
+
+
+end
