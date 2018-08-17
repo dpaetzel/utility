@@ -25,7 +25,15 @@ monitor() {
     return 0
 }
 
-echo $(date)
+generate_mailbox_files() {
+    local mailbox=$1
+    sed -E 's/ "/\n"/g' .mutt/mailboxes.muttrc \
+        | grep -E "^mailboxes|^\"\\+$mailbox" \
+        | sed -E "s/\\+$mailbox\\//\\+/" \
+        | xargs -d '\n' > "$HOME/.mutt/accounts/$mailbox-mailboxes.muttrc"
+}
+
+date
 
 # First check whether offlineimap is already running; if it is, exit.
 if [[ -n $(pgrep offlineimap) ]]; then
@@ -35,6 +43,8 @@ fi
 
 offlineimap -o $@ &
 monitor $!
+generate_mailbox_files uni
+generate_mailbox_files privat
 ret=$?
 
 # MAYBE if needed
