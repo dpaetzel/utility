@@ -1,0 +1,114 @@
+#! /usr/bin/env bash
+#
+# Requires: bash (e.g. git bash), pdftk, imagemagick, tesseract, xpdf-utils.
+
+
+# TODO add hash comparison to not do expensive stuff twice?
+
+
+# TODO if on win, do
+export PATH="/c/Program Files (x86)/Tesseract-OCR":$PATH
+export PATH="/c/Program Files/xpdf-tools-win-4.00/bin64":$PATH
+# TODO endif
+
+
+dir=$(pwd)
+
+
+tmp="$dir"/tmp
+mv "$tmp" "$(mktemp --directory --dry-run 'tmp-XXXX')" 2> /dev/null
+mkdir "$tmp"
+logs="$dir"/logs
+rm -rf "$logs" 2> /dev/null
+mkdir "$logs"
+output="$dir"/output
+mkdir "$output" 2> /dev/null
+
+
+overallPages=0
+ocrdPages=0
+processedPages=0
+avgTime=0
+firstPage=1
+
+
+pages() {
+    # grep needs -a b/c sometimes pdfinfo outputs binary data
+    pdfinfo "$1" | grep -a -E "^Pages:" | awk '{print $2}'
+}
+
+
+hasFonts() {
+    n=$(pdffonts "$1" | wc -l)
+
+    # pdffonts always puts out two lines as heading
+    test "$n" -gt 2
+}
+
+
+printStatusIndent() {
+  remainingPages=$((overallPages - processedPages))
+  echo "    Processed: $processedPages / $overallPages pages."
+  echo "    Remaining: $remainingPages pages."
+  echo "    Speed: $avgTime s/page."
+  # It seems as if bash cannot do floating point division …
+  echo "    ETA (if all needed OCR): " \
+       $(echo $avgTime $remainingPages | \
+           awk '{ printf "%.2f\n", $1 * $2 / 60 / 60 }') \
+       "h."
+}
+
+
+updateAvg() {
+  if test $firstPage -eq 1; then
+      avgTime=$delta
+      firstPage=0
+  else
+      # It seems as if bash cannot do floating point division …
+      # avgTime=$((avgTime + (delta - avgTime) / $processedPages.0))
+      avgTime=$(echo $avgTime $delta $ocrdPages | awk '{ printf "%.2f\n", $1 + ($2 - $1) / $3 }')
+  fi
+}
+
+
+for pdf in *.pdf; do
+    overallPages=$((overallPages + $(pages "$pdf")))
+done
+echo "Processed 0 / $overallPages pages."
+
+
+for pdf in *.pdf; do
+  if test -f "$output/$pdf"; then
+    echo "$pdf already exists in output directory, skipping ..."
+    processedPages=$((processedPages + $(pages "$pdf")))
+    printStatusIndent
+  elif hasFonts "$pdf"; then
+    echo "Copying searchable pdf $pdf ..."
+    cp "$pdf" "$output/$pdf" >> "$logs/$pdf".log 2>&1
+    processedPages=$((processedPages + $(pages "$pdf")))
+    printStatusIndent
+  else
+    echo "Performing OCR on pdf $pdf ..."
+    echo "  Splitting pages ..."
+    pdftk "$pdf" burst output "$tmp/$pdf-%08d.pdf" >> "$logs/$pdf".log 2>&1
+    cd "$tmp" || exit
+    echo "  Performing OCR on pages of pdf $pdf ..."
+    for page in "$pdf-"*; do
+        startTime="$(date +%s)"
+        echo "    Processing page $page ..."
+        convert -density 600 -depth 8 "$page" "$page.png" \
+          >> "$logs/$pdf".log 2>&1
+        tesseract "$page.png" "$page.png" -l deu+rus --oem 1 pdf \
+          >> "$logs/$pdf".log 2>&1
+        processedPages=$((processedPages + 1))
+        ocrdPages=$((ocrdPages + 1))
+        endTime="$(date +%s)"
+        delta=$((endTime - startTime))
+        updateAvg
+        printStatusIndent
+    done
+    echo "  Sewing together pages of $pdf ..."
+    pdftk "$pdf-"*.pdf cat output "$output/$pdf" >> "$logs/$pdf".log 2>&1
+    cd "$dir" || exit
+  fi
+done
