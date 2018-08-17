@@ -2,8 +2,36 @@
 # Clean up the $HOME directory (moving anything not belonging there to
 # $HOME/Temporary).
 
-# allowed=( Bin Buchhaltung Code Desktop Documents Dokumente Dropbox In.org Literatur Mail Music Pictures Projects Temporary TODO.org Videos )
-allowed=( Dropbox Code Mail Temporary $(grep --no-filename --color -i -E '^\[.*\]' .mrconfig .git.mrconfig .git-annex.mrconfig | sed -r 's/\[(.*)\]/\1/' | paste -d ' ' -s) )
+# TODO someday do something like this instead?
+# $(grep --no-filename --color -i -E '^\[.*\]' \
+#        .mrconfig \
+#        .git.mrconfig \
+#        .gitlab.mrconfig \
+#        .private.mrconfig \
+#       | sed -r 's/\[(.*)\]/\1/' | paste -d ' ' -s) )
+allowed=( Bilder \
+          Bin \
+          Buchhaltung \
+          Code \
+          Dokumente \
+          In.org \
+          Kalender \
+          LaTeX \
+          Lehre \
+          Lehrstuhl \
+          Literatur \
+          Mail \
+          NixOS \
+          Projekte \
+          Screencasts \
+          Spiele \
+          Templates \
+          Temporary \
+          texmf \
+          TODO.org \
+          TODO.org_archive \
+          VMs \
+          Vorträge )
 temporary=Temporary
 
 currentDir=$(pwd)
