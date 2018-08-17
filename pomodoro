@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 
 
+distractions=telegram-desktop
+
+
 if [[ -z $2 ]]; then
     min=25
 else
@@ -14,8 +17,18 @@ pidFile=/tmp/pomodoro.pid
 secs=$(( 60 * $min))
 
 
+killDistractions() {
+    echo "Killing distractions"
+    for d in $distractions; do
+        killall "$d" &> /dev/null || echo "  -" "$d" "wasn't running"
+    done
+    echo "Killed distractions"
+}
+
+
 case $1 in
     start | s )
+        killDistractions
         if [[ -f $pidFile ]]; then
             echo "Aborting previous pomodoro"
             kill $(head -1 $pidFile)
@@ -35,7 +48,6 @@ case $1 in
         ;;
 
     status )
-
         if [[ -f $pidFile ]]; then
             end=$(tail -1 $pidFile)
 
