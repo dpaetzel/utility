@@ -1,0 +1,4 @@
+#!/usr/bin/env fish
+
+
+pass show $argv | head -1
