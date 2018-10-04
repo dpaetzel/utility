@@ -1,0 +1,62 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p pdftk imagemagick tesseract_4 poppler_utils parallel
+#
+# Instead of poppler_utils one can also use xpdf-utils.
+
+
+# TODO add hash comparison to not do expensive stuff twice?
+
+
+# TODO if on win, do
+export PATH="/c/Program Files (x86)/Tesseract-OCR":$PATH
+export PATH="/c/Program Files/xpdf-tools-win-4.00/bin64":$PATH
+# TODO endif
+
+
+dir=$(pwd)
+output="$dir"/output
+log="$output"/ocr.log
+
+
+if test "$1" = ""; then
+  echo "Usage: ocr1 FILE"
+  exit 1
+else
+  pdf=$1
+  echo "Starting to process $pdf ..." >> "$log"
+fi
+
+
+mkdir "$output" 2> /dev/null
+
+
+hasFonts() {
+    n=$(pdffonts "$1" | wc -l)
+
+    # pdffonts always puts out two lines as heading
+    test "$n" -gt 2
+}
+
+
+if test -f "$output/$pdf"; then
+  echo "$pdf already exists in output directory, skipping ..." >> "$log"
+elif hasFonts "$pdf"; then
+  echo "Copying searchable pdf $pdf ..." >> "$log"
+  cp "$pdf" "$output/$pdf" > /dev/null 2>&1
+else
+  echo "Performing OCR on pdf $pdf ..." >> "$log"
+  tmp="$dir/$(mktemp --directory 'tmp-XXXXX')"
+  logs="$tmp"/logs
+  mkdir "$logs"
+  pdftk "$pdf" burst output "$tmp/$pdf-%08d.pdf" >> "$logs/$pdf".log 2>&1
+  cd "$tmp" || exit
+  for page in "$pdf-"*; do
+      convert -density 600 -depth 8 "$page" "$page.png" \
+        >> "$logs/$pdf".log 2>&1
+      tesseract "$page.png" "$page.png" -l deu+rus --oem 1 pdf \
+        >> "$logs/$pdf".log 2>&1
+  done
+  pdftk "$pdf-"*.pdf cat output "$output/$pdf" >> "$logs/$pdf".log 2>&1
+  echo "Finished processing $pdf." >> "$log"
+  cd "$dir" || exit
+fi

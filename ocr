@@ -1,6 +1,7 @@
-#! /usr/bin/env bash
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p pdftk imagemagick tesseract_4 poppler_utils parallel
 #
-# Requires: bash (e.g. git bash), pdftk, imagemagick, tesseract, xpdf-utils.
+# Instead of poppler_utils one can also use xpdf-utils.
 
 
 # TODO add hash comparison to not do expensive stuff twice?
@@ -36,6 +37,7 @@ pages() {
     # grep needs -a b/c sometimes pdfinfo outputs binary data
     pdfinfo "$1" | grep -a -E "^Pages:" | awk '{print $2}'
 }
+export -f pages
 
 
 hasFonts() {
@@ -44,6 +46,7 @@ hasFonts() {
     # pdffonts always puts out two lines as heading
     test "$n" -gt 2
 }
+export -f hasFonts
 
 
 printStatusIndent() {
@@ -57,6 +60,7 @@ printStatusIndent() {
            awk '{ printf "%.2f\n", $1 * $2 / 60 / 60 }') \
        "h."
 }
+export -f printStatusIndent
 
 
 updateAvg() {
@@ -69,15 +73,11 @@ updateAvg() {
       avgTime=$(echo $avgTime $delta $ocrdPages | awk '{ printf "%.2f\n", $1 + ($2 - $1) / $3 }')
   fi
 }
+export -f updateAvg
 
 
-for pdf in *.pdf; do
-    overallPages=$((overallPages + $(pages "$pdf")))
-done
-echo "Processed 0 / $overallPages pages."
-
-
-for pdf in *.pdf; do
+processPDF() {
+  pdf=$1
   if test -f "$output/$pdf"; then
     echo "$pdf already exists in output directory, skipping ..."
     processedPages=$((processedPages + $(pages "$pdf")))
@@ -111,4 +111,19 @@ for pdf in *.pdf; do
     pdftk "$pdf-"*.pdf cat output "$output/$pdf" >> "$logs/$pdf".log 2>&1
     cd "$dir" || exit
   fi
+}
+export -f processPDF
+
+
+for pdf in *.pdf; do
+    overallPages=$((overallPages + $(pages "$pdf")))
 done
+echo "Processed 0 / $overallPages pages."
+
+
+for pdf in *.pdf; do
+  processPDF $pdf
+done
+
+
+# find . -maxdepth 1 -type f -iname '*.pdf' | parallel processPDF
