@@ -3,27 +3,38 @@
 # Required: curl, pdftotext (from poppler-utils), cat, grep, sed
 
 
-set temp_pdf (mktemp)
-curl --silent --output $temp_pdf http://justika.de/Speisekarten/Justika_Wochenkarte_aktuell.pdf
+set dir "$HOME/.justika/"
+mkdir "$dir" 2> /dev/null
 
 
-if file $temp_pdf | grep PDF > /dev/null
+set name "$dir/"(date +%V)
+set pdf "$name".pdf
+set txt "$name".txt
 
 
-    set temp_txt (mktemp)
-    pdftotext $temp_pdf $temp_txt
+if test ! -f "$pdf"
+    curl --silent --output "$pdf" http://justika.de/Speisekarten/Justika_Wochenkarte_aktuell.pdf
+end
+
+
+if file "$pdf" | grep PDF > /dev/null
+
+
+    pdftotext "$pdf" "$txt"
 
 
     set days '(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)'
 
 
-    cat $temp_txt \
+    cat "$txt" \
     # discard heading
     | grep -v 'Kalenderwoche' \
     # discard footer
     | sed -rn '/Täglich wechselnde Suppe/q;p' \
     # discard ingredients footnotes and prices
     | sed -r "/$days/n;s/([[:digit:]],?)+( €)?//g" \
+    # enclose OPTIMAHL in brackets
+    | sed -r "s/\"(OPTIMAHL)\"/(\1™)/" \
     # discard empty lines
     | grep -v '^ *$' \
     # add bullet points
