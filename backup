@@ -1,0 +1,22 @@
+#!/usr/bin/env fish
+
+
+function bupit
+    set -l dir "$argv"
+
+
+    if test -d "$dir"
+        set -x BUP_DIR "$dir"/(hostname)
+
+
+        bup init
+        and bup index /home/david
+        and bup save -n (hostname)-home-david /home/david
+    else
+        echo "Not available: $dir"
+    end
+end
+
+
+bupit /run/media/david/odysseus2
+bupit /run/media/david/SEAGATE-MWQ
