@@ -28,7 +28,7 @@ killDistractions() {
 
 case $1 in
     start | s )
-        killDistractions
+        # killDistractions
         if [[ -f $pidFile ]]; then
             echo "Aborting previous pomodoro"
             kill $(head -1 $pidFile)
@@ -70,9 +70,9 @@ case $1 in
 
             left=$(( ($end - $(date +%s)) / 60 ))
 
-            echo "\${color red}$left min\$color"
+            echo "|  \${color red}$left min\$color"
         else
-            echo "Nope"
+            echo ""
         fi
 
         ;;
@@ -85,5 +85,8 @@ case $1 in
         else
             echo "No pomodoro running!"
         fi
+        ;;
+    * )
+        echo "Usage: pomodoro {start,status,conky,stop}"
         ;;
 esac
