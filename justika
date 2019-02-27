@@ -37,8 +37,17 @@ if file "$pdf" | grep PDF > /dev/null
     | sed -r "s/\"(OPTIMAHL)\"/(\1™)/" \
     # discard empty lines
     | grep -v '^ *$' \
+    # if OPTIMAHL is on its own line, move it up to the previous line
+    | tr '\n' '#' \
+    | sed -r "s/#(\(OPTIMAHL[^#]*#)/ \1/g" \
+    | tr '#' '\n' \
     # add bullet points
     | sed -r "/$days/n;s/^/• /"
+
+
+    if test "$argv" = "--pdfinfo" -o "$argv" = "-i"
+        pdfinfo "$pdf"
+    end
 
 
 else
