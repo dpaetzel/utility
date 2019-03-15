@@ -7,10 +7,10 @@
 # TODO add hash comparison to not do expensive stuff twice?
 
 
-# TODO if on win, do
-export PATH="/c/Program Files (x86)/Tesseract-OCR":$PATH
-export PATH="/c/Program Files/xpdf-tools-win-4.00/bin64":$PATH
-# TODO endif
+if test $(uname -o) = "Cygwin"; then
+    export PATH="/c/Program Files (x86)/Tesseract-OCR":$PATH
+    export PATH="/c/Program Files/xpdf-tools-win-4.00/bin64":$PATH
+fi
 
 
 dir=$(pwd)
