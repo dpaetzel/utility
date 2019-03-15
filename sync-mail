@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#
 # Credit for the basic idea goes to pbrisbin
 # (https://pbrisbin.com/posts/mutt_gmail_offlineimap/) and probably many others.
 
@@ -46,6 +47,7 @@ offlineimap -o "$@" &
 monitor $!
 generate_mailbox_files uni
 generate_mailbox_files privat
+generate_mailbox_files beide
 ret=$?
 
 # MAYBE if needed
