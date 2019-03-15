@@ -38,7 +38,6 @@ function getPhotos {
         echo "No photos to archive"
         rm -rf $dir
     else
-        echo "Archiving photos on phone…"
         if adb shell "test -d sdcard/DCIM/Archive"; then
             echo Archive directory already existed, appending
         elif adb shell "test \! -e sdcard/DCIM/Archive"; then
@@ -48,7 +47,34 @@ function getPhotos {
             echo Archive is not a directory, aborting!
             return 1
         fi
+        echo "Archiving photos on phone…"
         adb shell "mv sdcard/DCIM/Camera/* sdcard/DCIM/Archive/"
+    fi
+}
+
+
+function getRecordings {
+    what=recordings
+    localDir=$(mktemp --dry-run --directory --tmpdir=. $(date -I)-$what-XXXX)
+    phoneDir=sdcard/Android/data/com.github.axet.audiorecorder/files/recordings
+
+    adb pull "$phoneDir" "$localDir"
+
+    if [[ -z $(ls $localDir) ]]; then
+        echo "No $what to archive"
+        rm -rf $localDir
+    else
+        if adb shell "test -d $phoneDir/../Archive"; then
+            echo Archive directory already existed, appending
+        elif adb shell "test \! -e $phoneDir/../Archive"; then
+            echo Archive directory did not exist, creating
+            adb shell "mkdir $phoneDir/../Archive/"
+        else
+            echo Archive is not a directory, aborting!
+            return 1
+        fi
+        echo "Archiving $what on phone…"
+        adb shell "mv $phoneDir/* $phoneDir/../Archive/"
     fi
 }
 
@@ -56,5 +82,8 @@ function getPhotos {
 case $1 in
     photos)
         getPhotos
+        ;;
+    recordings)
+        getRecordings
         ;;
 esac
