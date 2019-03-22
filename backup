@@ -10,13 +10,15 @@ function bupit
 
 
         bup init
-        and bup index /home/david
-        and bup save -n (hostname)-home-david /home/david
+        and bup index "/home/$USER"
+        and bup save -n (hostname)-home-"$USER" "/home/$USER"
+        and bup fsck -g
     else
         echo "Not available: $dir"
     end
 end
 
 
+bupit /run/media/david/odysseus1
 bupit /run/media/david/odysseus2
-bupit /run/media/david/SEAGATE-MWQ
+bupit /run/media/david/odysseus3
