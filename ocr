@@ -2,9 +2,8 @@
 #! nix-shell -i bash -p pdftk imagemagick tesseract_4 poppler_utils parallel
 #
 # Instead of poppler_utils one can also use xpdf-utils.
-
-
-# TODO add hash comparison to not do expensive stuff twice?
+#
+# This script automatically performs OCR on all PDFs in the current directory.
 
 
 if test $(uname -o) = "Cygwin"; then
@@ -97,13 +96,13 @@ processPDF() {
     for page in $(find . -regextype posix-extended -regex "./$pdf-[[:digit:]]+\.pdf"); do
       startTime="$(date +%s)"
       echo "    Processing page $page ..."
-      if test ! -f "$page.png"; then
+      if test ! -f "$page.png" -a -s "$page.png"; then
         convert -density 600 -depth 8 "$page" "$page.png" \
           >> "$logs/$pdf".log 2>&1
       else
         echo "    Page $page was already converted to PNG ..."
       fi
-      if test ! -f "$page.png.pdf"; then
+      if test ! -f "$page.png.pdf" -a -s "$page.png.pdf"; then
         tesseract "$page.png" "$page.png" -l deu+rus --oem 1 pdf \
           >> "$logs/$pdf".log 2>&1
       else
@@ -117,7 +116,7 @@ processPDF() {
       printStatusIndent
     done
     echo "  Sewing together pages of $pdf ..."
-    pdftk "$pdf-"*.pdf cat output "$output/$pdf" >> "$logs/$pdf".log 2>&1
+    pdftk "$pdf-"*.pdf.png.pdf cat output "$output/$pdf" >> "$logs/$pdf".log 2>&1
     cd "$dir" || exit
   fi
 }
