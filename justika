@@ -4,12 +4,12 @@
 
 
 if test "X$argv" = "X--help" -o "X$argv" = "X-h"
-    echo "Usage: justika [-i|t|h]"
+    echo "Usage: justika [-i|w|h]"
     printf "%s\n" \
-      "|-i, --pdfinfo|Print pdfinfo" \
-      "|-t, --today|Print today's offer" \
-      | column -t -s "|"
-    echo "Without arguments, print all offers of the current week."
+        "|-i, --pdfinfo|Print pdfinfo" \
+        "|-w, --week|Print all offers of the current week" \
+        | column -t -s "|"
+    echo "Without arguments, print today's offer"
     exit 0
 end
 
@@ -57,13 +57,13 @@ if file "$pdf" | grep PDF > /dev/null
     | sed -r "/$days/n;s/^/• /")
 
 
-    if test "X$argv" = "X--today" -o "X$argv" = "X-t"
-        set -x LANG de_DE.UTF-8
-        echo "$content" | grep --color=never -A 3 (date +%A)
+    if test "X$argv" = "X--week" -o "X$argv" = "X-w"
+        echo "$content"
     else if test "$argv" = "--pdfinfo" -o "$argv" = "-i"
         pdfinfo "$pdf"
     else
-        echo "$content"
+        set -x LANG de_DE.UTF-8
+        echo "$content" | grep --color=never -A 3 (date +%A)
     end
 
 
