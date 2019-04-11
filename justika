@@ -3,6 +3,17 @@
 # Required: curl, pdftotext (from poppler-utils), cat, grep, sed
 
 
+if test "X$argv" = "X--help" -o "X$argv" = "X-h"
+    echo "Usage: justika [-i|t|h]"
+    printf "%s\n" \
+      "|-i, --pdfinfo|Print pdfinfo" \
+      "|-t, --today|Print today's offer" \
+      | column -t -s "|"
+    echo "Without arguments, print all offers of the current week."
+    exit 0
+end
+
+
 set dir "$HOME/.justika/"
 mkdir "$dir" 2> /dev/null
 
@@ -26,7 +37,8 @@ if file "$pdf" | grep PDF > /dev/null
     set days '(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)'
 
 
-    cat "$txt" \
+    set -l IFS
+    set content (cat "$txt" \
     # discard heading
     | grep -v 'Kalenderwoche' \
     # discard footer
@@ -42,11 +54,16 @@ if file "$pdf" | grep PDF > /dev/null
     | sed -r "s/#(\(OPTIMAHL[^#]*#)/ \1/g" \
     | tr '#' '\n' \
     # add bullet points
-    | sed -r "/$days/n;s/^/• /"
+    | sed -r "/$days/n;s/^/• /")
 
 
-    if test "$argv" = "--pdfinfo" -o "$argv" = "-i"
+    if test "X$argv" = "X--today" -o "X$argv" = "X-t"
+        set -x LANG de_DE.UTF-8
+        echo "$content" | grep --color=never -A 3 (date +%A)
+    else if test "$argv" = "--pdfinfo" -o "$argv" = "-i"
         pdfinfo "$pdf"
+    else
+        echo "$content"
     end
 
 
