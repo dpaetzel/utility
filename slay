@@ -22,7 +22,6 @@ case $1 in
             mobile | m)
                 # TODO should probably differentiate between hostnames here (e.g. this is only possible for sokrates)
                 xrandr \
-                    --output VIRTUAL1 --off \
                     --output eDP-1 --primary --mode 1920x1080 --pos 0x900 --rotate normal \
                     --output DP-1 --off \
                     --output DP-2-1 --off \
@@ -36,7 +35,6 @@ case $1 in
                 ;;
             home1 | h1)
                 xrandr \
-                   --output VIRTUAL1 --off \
                    --output eDP-1 --primary --mode 1920x1080 --pos 0x900 --rotate normal \
                    --output DP-1 --mode 1920x1080 --pos 1920x0 --rotate normal \
                    --output DP-2-1 --off \
@@ -50,7 +48,6 @@ case $1 in
                 ;;
             home2 | h2)
                 xrandr \
-                    --output VIRTUAL1 --off \
                     --output eDP-1 --primary --mode 1920x1080 --pos 0x1080 --rotate normal \
                     --output DP1 --off \
                     --output DP-2-1 --off \
@@ -64,7 +61,6 @@ case $1 in
                 ;;
             docked | d | *)
                 xrandr \
-                   --output VIRTUAL1 --off \
                    --output eDP-1 --primary --mode 1920x1080 --pos 0x180 --rotate normal \
                    --output DP-1 --off \
                    --output DP-2-1 --mode 2560x1440 --pos 1920x0 --rotate normal \
