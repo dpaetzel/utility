@@ -6,4 +6,4 @@
 # This can also be specified via the ALTERNATE_EDITOR environment variable. If
 # the value of ALTERNATE_EDITOR is the empty string, run "emacs --daemon" to
 # start Emacs in daemon mode, and try to connect to it.
-emacsclient -c -a "" -s /tmp/emacs1000/server $argv
+emacsclient -a "" -s /tmp/emacs1000/server $argv
