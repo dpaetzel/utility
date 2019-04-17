@@ -14,10 +14,10 @@ interval=10
 monitor() {
     local pid=$1 i=0
 
-    while ps $pid &>/dev/null; do
+    while ps "$pid" &>/dev/null; do
         if (( i++ > wait / interval )); then
             echo "Max checks reached. Sending SIGKILL to ${pid}..." >&2
-            kill -9 $pid
+            kill -9 "$pid"
             return 1
         fi
 
@@ -45,10 +45,10 @@ fi
 
 offlineimap -o "$@" &
 monitor $!
+ret=$?
 generate_mailbox_files uni
 generate_mailbox_files privat
 generate_mailbox_files beide
-ret=$?
 
 # MAYBE if needed
 # sleep 1
