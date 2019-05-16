@@ -4,13 +4,28 @@
 
 
 if test "X$argv" = "X--help" -o "X$argv" = "X-h"
-    echo "Usage: justika [-i|w|h]"
+    echo "Usage: justika [-i] [-w] [-a] [-h]"
     printf "%s\n" \
         "|-i, --pdfinfo|Print pdfinfo" \
         "|-w, --week|Print all offers of the current week" \
+        "|-a, --a|Print all offers (not just the vegetarian one)" \
         | column -t -s "|"
     echo "Without arguments, print today's offer"
     exit 0
+end
+
+
+set -l week
+set -l all
+set -l info
+for arg in $argv
+    if test "X$arg" = "X--week" -o "X$arg" = "X-w"
+        set week t
+    else if test "X$arg" = "X--pdfinfo" -o "X$arg" = "X-i"
+        set info t
+    else if test "X$arg" = "X--all" -o "X$arg" = "X-a"
+        set all t
+    end
 end
 
 
@@ -57,13 +72,22 @@ if file "$pdf" | grep PDF > /dev/null
     | sed -r "/$days/n;s/^/• /")
 
 
-    if test "X$argv" = "X--week" -o "X$argv" = "X-w"
-        echo "$content"
-    else if test "$argv" = "--pdfinfo" -o "$argv" = "-i"
-        pdfinfo "$pdf"
-    else
+    if test "X$week" = "X"
         set -x LANG de_DE.UTF-8
-        echo "$content" | grep --color=never -A 3 (date +%A)
+        if test "X$all" = "X"
+            echo "$content" | grep --color=never -A 1 (date +%A)
+        else
+            echo "$content" | grep --color=never -A 3 (date +%A)
+        end
+    else
+        if test "X$all" = "X"
+            echo "$content" | grep --color=never -A 1 -E "^[^•]" | grep -v -E "^--"
+        else
+            echo "$content"
+        end
+    end
+    if test -n "$info"
+        pdfinfo "$pdf"
     end
 
 
