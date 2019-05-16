@@ -8,7 +8,8 @@ if test "X$argv" = "X--help" -o "X$argv" = "X-h"
     printf "%s\n" \
         "|-i, --pdfinfo|Print pdfinfo" \
         "|-w, --week|Print all offers of the current week" \
-        "|-a, --a|Print all offers (not just the vegetarian one)" \
+        "|-a, --all|Print all offers (not just the vegetarian one)" \
+        "|-n, --next|Print next week's offers instead of the current week's" \
         | column -t -s "|"
     echo "Without arguments, print today's offer"
     exit 0
@@ -18,6 +19,7 @@ end
 set -l week
 set -l all
 set -l info
+set -l next
 for arg in $argv
     if test "X$arg" = "X--week" -o "X$arg" = "X-w"
         set week t
@@ -25,6 +27,8 @@ for arg in $argv
         set info t
     else if test "X$arg" = "X--all" -o "X$arg" = "X-a"
         set all t
+    else if test "X$arg" = "X--next" -o "X$arg" = "X-n"
+        set next t
     end
 end
 
@@ -33,13 +37,21 @@ set dir "$HOME/.justika/"
 mkdir "$dir" 2> /dev/null
 
 
-set name "$dir/"(date +%V)
+if test "X$next" = "X"
+    set name "$dir/"(date +%V)
+else
+    set name "$dir/"(math (date +%V) + 1)
+end
 set pdf "$name".pdf
 set txt "$name".txt
 
 
 if test ! -f "$pdf"
-    curl --silent --output "$pdf" http://justika.de/Speisekarten/Justika_Wochenkarte_aktuell.pdf
+    if test "X$next" = "X"
+        curl --silent --output "$pdf" http://justika.de/Speisekarten/Justika_Wochenkarte_aktuell.pdf
+    else
+        curl --silent --output "$pdf" http://justika.de/Speisekarten/Justika_Wochenkarte_kommend.pdf
+    end
 end
 
 
@@ -72,7 +84,7 @@ if file "$pdf" | grep PDF > /dev/null
     | sed -r "/$days/n;s/^/• /")
 
 
-    if test "X$week" = "X"
+    if test "X$week" = "X" -a "X$next" = "X"
         set -x LANG de_DE.UTF-8
         if test "X$all" = "X"
             echo "$content" | grep --color=never -A 1 (date +%A)
