@@ -38,9 +38,9 @@ mkdir "$dir" 2> /dev/null
 
 
 if test "X$next" = "X"
-    set name "$dir/"(date +%V)
+    set name "$dir/"(date +%Y-%V)
 else
-    set name "$dir/"(math (date +%V) + 1)
+    set name "$dir/"(math (date +%Y-%V) + 1)
 end
 set pdf "$name".pdf
 set txt "$name".txt
