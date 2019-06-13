@@ -4,15 +4,11 @@
 
 
 resetWM() {
-    killall compton
-
     "$HOME"/.fehbg
 
     killall dzen2
 
     xmonad --restart
-
-    compton -b
 }
 
 
