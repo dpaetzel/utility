@@ -61,6 +61,11 @@ if file "$pdf" | grep PDF > /dev/null
     pdftotext "$pdf" "$txt"
 
 
+    if cat "$txt" | grep geschlossen > /dev/null
+        cat "$txt"
+    end
+
+
     set days '(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)'
 
 
