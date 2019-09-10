@@ -61,32 +61,27 @@ if file "$pdf" | grep PDF > /dev/null
     pdftotext "$pdf" "$txt"
 
 
-    if cat "$txt" | grep geschlossen > /dev/null
-        cat "$txt"
-    end
-
-
     set days '(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)'
 
 
     set -l IFS
     set content (cat "$txt" \
-    # discard heading
-    | grep -v 'Kalenderwoche' \
-    # discard footer
-    | sed -rn '/Täglich wechselnde Suppe/q;p' \
-    # discard ingredients footnotes and prices
-    | sed -r "/$days/n;s/([[:digit:]],?)+( €)?//g" \
-    # enclose OPTIMAHL in brackets
-    | sed -r "s/\"(OPTIMAHL)\"/(\1™)/" \
-    # discard empty lines
-    | grep -v '^ *$' \
-    # if OPTIMAHL is on its own line, move it up to the previous line
-    | tr '\n' '#' \
-    | sed -r "s/#(\(OPTIMAHL[^#]*#)/ \1/g" \
-    | tr '#' '\n' \
-    # add bullet points
-    | sed -r "/$days/n;s/^/• /")
+        # discard heading
+        | grep -v 'Kalenderwoche' \
+        # discard footer
+        | sed -rn '/Täglich wechselnde Suppe/q;p' \
+        # discard ingredients footnotes and prices
+        | sed -r "/$days/n;s/([[:digit:]],?)+( €)?//g" \
+        # enclose OPTIMAHL in brackets
+        | sed -r "s/\"(OPTIMAHL)\"/(\1™)/" \
+        # discard empty lines
+        | grep -v '^ *$' \
+        # if OPTIMAHL is on its own line, move it up to the previous line
+        | tr '\n' '#' \
+        | sed -r "s/#(\(OPTIMAHL[^#]*#)/ \1/g" \
+        | tr '#' '\n' \
+        # add bullet points
+        | sed -r "/$days/n;s/^/• /")
 
 
     if test "X$week" = "X" -a "X$next" = "X"
@@ -94,7 +89,8 @@ if file "$pdf" | grep PDF > /dev/null
         if test "X$all" = "X"
             echo "$content" | grep --color=never -A 1 (date +%A)
         else
-            echo "$content" | grep --color=never -A 3 (date +%A)
+            # print from date up to next non-item, then delete last line
+            echo "$content" | sed --quiet /(date +%A)/,/^[^•]/p | sed '$d'
         end
     else
         if test "X$all" = "X"
