@@ -72,8 +72,8 @@ if file "$pdf" | grep PDF > /dev/null
         | sed -rn '/Täglich wechselnde Suppe/q;p' \
         # discard ingredients footnotes and prices
         | sed -r "/$days/n;s/([[:digit:]],?)+( €)?//g" \
-        # enclose OPTIMAHL in brackets
-        | sed -r "s/\"(OPTIMAHL)\"/(\1™)/" \
+        # enclose OPTIMAHL in brackets (sometimes they forget the second one)
+        | sed -r "s/\"(OPTIMAHL)\"?/(\1™)/" \
         # discard empty lines
         | grep -v '^ *$' \
         # if OPTIMAHL is on its own line, move it up to the previous line
