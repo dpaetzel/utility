@@ -2,10 +2,20 @@
 #
 # Credit for the basic idea goes to pbrisbin
 # (https://pbrisbin.com/posts/mutt_gmail_offlineimap/) and probably many others.
-
+#
 # Check every $interval seconds if the process identified as $1 is still
 # running. After the next check after $wait seconds, kill it. Return non-zero to
 # indicate something was killed.
+
+
+time_since_last_sync=$((($(date +%s) - $(cat /tmp/sync-mail.tmp)) / 60))
+if test "$time_since_last_sync" -lt 60; then
+    read -r -p "You sync'd during the last hour ("$time_since_last_sync" minutes ago). Really sync? [y/N] " reply
+    if test "$reply" != "y" -a "$reply" != "Y"; then
+        exit 0
+    fi
+fi
+
 
 wait=${1:-300}
 shift
@@ -50,9 +60,6 @@ generate_mailbox_files uni
 generate_mailbox_files privat
 generate_mailbox_files beide
 
-# MAYBE if needed
-# sleep 1
-# notmuch new
-# afew --new --tag --verbose
+date +%s > /tmp/sync-mail.tmp
 
 exit $ret
