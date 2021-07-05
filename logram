@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+
+while ps $1 > /dev/null; do
+  ps -o vsz= $1
+  sleep 1
+done
