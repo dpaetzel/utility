@@ -1,7 +1,13 @@
-#!/usr/bin/env bash
+#!/usr/bin/env fish
 
 
-while ps $1 > /dev/null; do
-  ps -o vsz= $1
-  sleep 1
-done
+while ps $argv > /dev/null
+    set data (ps -o pid=,vsz= $argv | sed -r 's/^ *//;s/ +/X/;s/ *$/\n/' | string split0)
+    # TODO The repetition is ugly.
+    set pids (string split --no-empty (echo $data | cut -f 1 --delimiter="X"))
+    set rams (string split --no-empty (echo $data | cut -f 2 --delimiter="X"))
+    for i in (seq (count $pids))
+        echo $pids[$i] (math --scale=2 $rams[$i] / 1024 / 1024) GB
+    end
+    sleep 10
+end
