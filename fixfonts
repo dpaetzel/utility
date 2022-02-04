@@ -4,8 +4,8 @@
 function fixfonts
     for f in $argv
         set tmp (mktemp)
-        gs -o $tmp -sDEVICE=pdfwrite -dEmbedAllFonts=true $f
-        mv $tmp $f
+        gs -o "$tmp" -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dEmbedAllFonts=true "$f"
+        mv "$tmp" "$f"
     end
 end
 
