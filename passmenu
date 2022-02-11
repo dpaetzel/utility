@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+# Based on the passmenu script bundled with password-store.
+#
+# Changes:
+# - Use xvkbd instead of xdotool
+# - Add sleep before typing
+
+shopt -s nullglob globstar
+
+typeit=0
+if [[ $1 == "--type" ]]; then
+	typeit=1
+	shift
+fi
+
+prefix=${PASSWORD_STORE_DIR-~/.password-store}
+password_files=( "$prefix"/**/*.gpg )
+password_files=( "${password_files[@]#"$prefix"/}" )
+password_files=( "${password_files[@]%.gpg}" )
+
+password=$(printf '%s\n' "${password_files[@]}" | dmenu "$@")
+
+[[ -n $password ]] || exit
+
+if [[ $typeit -eq 0 ]]; then
+	pass show -c "$password" 2>/dev/null
+else
+	pass show "$password" | { IFS= read -r pass; sleep 0.3; printf %s "$pass"; } |
+	    # This does not work well with non-default keyboard layouts.
+		# xdotool type --clearmodifiers --file -
+	    xvkbd -xsendevent -file -
+fi
