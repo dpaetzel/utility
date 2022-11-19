@@ -27,7 +27,12 @@ if [[ $typeit -eq 0 ]]; then
 	pass show -c "$password" 2>/dev/null
 else
 	pass show "$password" | { IFS= read -r pass; sleep 0.3; printf %s "$pass"; } |
-	    # This does not work well with non-default keyboard layouts.
-		# xdotool type --clearmodifiers --file -
-	    xvkbd -xsendevent -file -
+	    # xdotool did not work with lilyterm (I think) but xvkbd did.
+	    # However, xvkbd does not work with kitty (inputs wrong symbols into
+	    # remote server's password prompts).
+		#
+	    # xvkbd -xsendevent -file -
+		xdotool type --clearmodifiers --file -
+		# TODO After another update, however, it is the other way around for
+		# input into Emacs.
 fi

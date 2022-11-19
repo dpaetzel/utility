@@ -29,6 +29,20 @@ case $1 in
                 resetWM
                 reconky mobile
                 ;;
+            home | h )
+                xrandr \
+                    --output eDP-1 --primary --mode 1920x1080 --pos 1920x256 --rotate normal \
+                    --output DP-1 --off \
+                    --output HDMI-1 --off \
+                    --output DP-2 --off \
+                    --output HDMI-2 --mode 1920x1080 --pos 0x0 --rotate normal \
+                    --output DP-2-1 --off \
+                    --output DP-2-2 --off \
+                    --output DP-2-3 --off
+                resetWM
+                resetWM
+                reconky home
+                ;;
             home1 | h1)
                 xrandr \
                    --output eDP-1 --primary --mode 1920x1080 --pos 0x900 --rotate normal \
@@ -55,7 +69,43 @@ case $1 in
                 resetWM
                 reconky home2
                 ;;
-            docked | d | *)
+            home3 | h3)
+                xrandr \
+                    --output eDP-1 --primary --mode 1920x1080 --pos 2560x1080 --rotate normal \
+                    --output DP-1 --off \
+                    --output HDMI-1 --off \
+                    --output DP-2 --off \
+                    --output HDMI-2 --mode 2560x1440 --pos 0x0 --rotate normal
+                resetWM
+                reconky home3
+                ;;
+            dockedhome1 | dh1)
+                xrandr \
+                    --output eDP-1 --off \
+                    --output DP-1 --off \
+                    --output HDMI-1 --off \
+                    --output DP-2 --off \
+                    --output HDMI-2 --off \
+                    --output DP-2-1 --off \
+                    --output DP-2-2 --primary --mode 2560x1440 --pos 0x0 --rotate normal \
+                    --output DP-2-3 --off
+                resetWM
+                reconky dockedhome1
+                ;;
+            dockedhome | dh)
+                xrandr \
+                    --output eDP-1 --primary --mode 1920x1080 --pos 2560x0 --rotate normal \
+                    --output DP-1 --off \
+                    --output HDMI-1 --off \
+                    --output DP-2 --off \
+                    --output HDMI-2 --off \
+                    --output DP-2-2 --mode 2560x1440 --pos 0x0 --rotate normal \
+                    --output DP-2-1 --off \
+                    --output DP-2-3 --off
+                resetWM
+                reconky dockedhome
+                ;;
+            docked1 | d1)
                 # strange: this does sometimes not work if using only one call to xrandr
                 xrandr \
                     --output eDP-1 --off \
@@ -66,6 +116,44 @@ case $1 in
                     --output DP-2-1 --mode 2560x1440 --pos 0x0 --rotate normal \
                     --output DP-2-2 --mode 2560x1440 --pos 2560x0 --rotate normal \
                     --output DP-2-3 --off
+                resetWM
+                reconky docked
+                ;;
+            work | w)
+                xrandr \
+                    --output eDP-1 --off \
+                    --output DP-1 --off \
+                    --output HDMI-1 --off \
+                    --output DP-2 --off \
+                    --output HDMI-2 --mode 2560x1440 --pos 0x0 --rotate normal \
+                    --output DP-2-1 --off \
+                    --output DP-2-2 --off \
+                    --output DP-2-3 --off
+                resetWM
+                reconky dockedhome1
+                ;;
+            docked | d | *)
+                xrandr \
+                    --output eDP-1 --off \
+                    --output DP-1 --off \
+                    --output HDMI-1 --off \
+                    --output DP-2 --off \
+                    --output HDMI-2 --off \
+                    --output DP-2-1 --mode 2560x1440 --pos 0x0 --rotate right \
+                    --output DP-2-2 --mode 2560x1440 --pos 1440x800 --rotate normal \
+                    --output DP-2-3 --off
+                # xrandr --verbose --output DP-1 --off
+                # xrandr --verbose --output DP-2 --off
+                # xrandr --verbose --output DP-2-1 --off
+                # xrandr --verbose --output DP-2-2 --off
+                # xrandr --verbose --output DP-2-3 --off
+                # xrandr --verbose --output eDP-1 --off
+                # xrandr --verbose --output HDMI-1 --off
+                # xrandr --verbose --output HDMI-2 --off
+                # xrandr --verbose --output DP-2-1 --mode 2560x1440 --pos 0x0 --rotate right --crtc 1
+                # xrandr --verbose --output DP-2-2 --mode 2560x1440 --pos 1440x800 --rotate normal --crtc 1
+                # xrandr --output DP-2-3 --off
+                resetWM
                 resetWM
                 reconky docked
                 ;;

@@ -10,7 +10,9 @@ allowed=( Bilder \
           Bin \
           Buchhaltung \
           Code \
+          Day.md \
           Dokumente \
+          Drucken \
           In.org \
           Inbox \
           Kalender \
@@ -21,6 +23,7 @@ allowed=( Bilder \
           Mail \
           Musik \
           NixOS \
+          prolcs \
           Projekte \
           Screencasts \
           Spiele \
@@ -31,7 +34,9 @@ allowed=( Bilder \
           TODO.org \
           TODO.org_archive \
           VMs \
-          Vorträge )
+          Vorträge \
+          Zettels \
+          Zettels_ )
 temporary=Temporary
 inbox=Inbox
 
