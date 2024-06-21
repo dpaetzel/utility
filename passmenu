@@ -24,7 +24,9 @@ password=$(printf '%s\n' "${password_files[@]}" | dmenu "$@")
 [[ -n $password ]] || exit
 
 if [[ $typeit -eq 0 ]]; then
+	clipctl disable
 	pass show -c "$password" 2>/dev/null
+	clipctl enable
 else
 	pass show "$password" | { IFS= read -r pass; sleep 0.3; printf %s "$pass"; } |
 	    # xdotool did not work with lilyterm (I think) but xvkbd did.
