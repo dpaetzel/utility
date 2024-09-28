@@ -1,0 +1,66 @@
+#!/usr/bin/env fish
+
+function show_help
+    echo "Usage: shot [MODE] [OPTIONS]"
+    echo ""
+    echo "Modes:"
+    echo "  open   Open the screenshot in GIMP after capturing it"
+    echo "  clip   Copy the screenshot to clipboard after capturing it"
+    echo "  save   Save the screenshot to a file (default if no mode is given)"
+    echo ""
+    echo "Options:"
+    echo "  --disable-picom   Stop and restart picom to get an unfaded shot"
+    echo "  -h, --help        Show this help message"
+end
+
+set should_manage_picom "no"
+set screenshot_mode "save"
+
+# Parse command-line arguments
+for arg in $argv
+    switch $arg
+        case 'open'
+            set screenshot_mode "open"
+        case 'clip'
+            set screenshot_mode "clip"
+        case 'save'
+            set screenshot_mode "save"
+        case '--disable-picom'
+            set should_manage_picom "yes"
+        case '-h' '--help'
+            show_help
+            exit 0
+        case '*'
+            echo "Unknown option: $arg"
+            show_help
+            exit 1
+    end
+end
+
+# Stop picom if desired.
+if test $should_manage_picom = "yes"
+    systemctl --user stop picom
+end
+
+# Define the screenshot name using the current date and time.
+set fname (date +"%F %R Screenshot \$wx\$h.png")
+
+# Pause briefly before taking the screenshot.
+sleep 0.2
+
+set args_scrot --freeze --select --line mode=classic,style=dash,width=3,color=red
+
+# Build the scrot command based on the chosen mode.
+switch $screenshot_mode
+    case "open"
+        scrot $args_scrot --exec 'gimp \"$f\"' "$fname"
+    case "clip"
+        scrot $args_scrot - | xclip -selection clipboard -t image/png
+    case "save"
+        scrot $args_scrot "$fname"
+end
+
+# Restart picom if desired.
+if test $should_manage_picom = "yes"
+    systemctl --user start picom
+end
