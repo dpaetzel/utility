@@ -4,29 +4,37 @@ function show_help
     echo "Usage: shot [MODE] [OPTIONS]"
     echo ""
     echo "Modes:"
-    echo "  open   Open the screenshot in GIMP after capturing it"
-    echo "  clip   Copy the screenshot to clipboard after capturing it"
-    echo "  save   Save the screenshot to a file (default if no mode is given)"
+    echo "  open     Open the screenshot in GIMP after capturing it"
+    echo "  clip     Copy the screenshot to clipboard after capturing it"
+    echo "  save     Save the screenshot to a file (default)"
+    echo "  save-as  Save the screenshot to file with name like last argument given"
     echo ""
     echo "Options:"
-    echo "  --disable-picom   Stop and restart picom to get an unfaded shot"
-    echo "  -h, --help        Show this help message"
+    echo "  --keep-picom   Do not stop and restart picom to get an unfaded shot"
+    echo "  -h, --help     Show this help message"
 end
 
-set should_manage_picom "no"
+set should_manage_picom "yes"
 set screenshot_mode "save"
 
+# Define the screenshot name using the current date and time.
+set fname (date +"%F %R Screenshot \$wx\$h.png")
+
 # Parse command-line arguments
-for arg in $argv
-    switch $arg
+set idx 1
+while test $idx -lt (count $argv)
+    switch $argv[$idx]
         case 'open'
             set screenshot_mode "open"
         case 'clip'
             set screenshot_mode "clip"
         case 'save'
             set screenshot_mode "save"
-        case '--disable-picom'
-            set should_manage_picom "yes"
+        case 'save-as'
+            set screenshot_mode "save-as"
+            set fname $argv[(math $idx + 1)]
+        case '--keep-picom'
+            set should_manage_picom "no"
         case '-h' '--help'
             show_help
             exit 0
@@ -35,15 +43,13 @@ for arg in $argv
             show_help
             exit 1
     end
+    set idx (math $idx + 1)
 end
 
 # Stop picom if desired.
 if test $should_manage_picom = "yes"
     systemctl --user stop picom
 end
-
-# Define the screenshot name using the current date and time.
-set fname (date +"%F %R Screenshot \$wx\$h.png")
 
 # Pause briefly before taking the screenshot.
 sleep 0.2
@@ -57,6 +63,8 @@ switch $screenshot_mode
     case "clip"
         scrot $args_scrot - | xclip -selection clipboard -t image/png
     case "save"
+        scrot $args_scrot "$fname"
+    case "save-as"
         scrot $args_scrot "$fname"
 end
 
