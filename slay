@@ -13,6 +13,10 @@ resetWM() {
 
 
 case $1 in
+    home | h)
+        resetWM
+        reconky home1
+        ;;
     work | w)
         case $2 in
             mobile | m)
