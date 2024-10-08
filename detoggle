@@ -1,0 +1,26 @@
+#!/usr/bin/env fish
+
+function toggle_keyboard_layout
+    # Retrieve the current layout and variant
+    set layout_info (setxkbmap -query | string match -r "layout:.*" | string trim)
+    set variant_info (setxkbmap -query | string match -r "variant:.*" | string trim)
+
+    # Check if the current layout and variant is 'de' and 'neo'
+    if string match -qr "layout:\s+de" $layout_info
+        if string match -qr "variant:\s+neo" $variant_info
+            # Switch to the 'de' layout without variant
+            setxkbmap de
+            echo "Switched to German layout (default)"
+        else
+            # Switch to the 'de' layout with 'neo' variant
+            setxkbmap de neo
+            echo "Switched to German layout (neo variant)"
+        end
+    else
+        # Fallback to default 'de' layout if something else is detected
+        setxkbmap de
+        echo "Switched to German layout (default)"
+    end
+end
+
+toggle_keyboard_layout
