@@ -1,0 +1,60 @@
+#!/usr/bin/env fish
+
+# Define the directory containing your publications.
+set literature_dir ~/3Ressourcen/Literatur
+
+# Generate the menu entries and corresponding file paths using find and awk
+# (note that Fish loops where too slow).
+set menu_entries_and_paths (find \
+    -L \
+    $literature_dir \
+    -mindepth 2 \
+    -maxdepth 2 \
+    -type f \
+    -name "*.pdf" \
+    -print0 \
+    | \
+    awk -v RS='\0' '{
+        filepath = $0
+        n = split(filepath, parts, "/")
+        dirname = parts[n-1]
+        filename = parts[n]
+        fname_noext = filename
+        sub(/\.pdf$/, "", fname_noext)
+        split(fname_noext, title_parts, " - ")
+        if (length(title_parts) > 1) {
+          papertitle = title_parts[2]
+        } else {
+          papertitle = fname_noext
+        }
+        # Replace tabs and newlines in dirname and papertitle
+        gsub(/\t|\n/, " ", dirname)
+        gsub(/\t|\n/, " ", papertitle)
+        entry = dirname ": " papertitle
+        # Output the menu entry and file path separated by a tab
+        print entry "\t" filepath
+    }')
+
+# Exit if no entries are found.
+if test -z "$menu_entries_and_paths"
+    echo "No PDF files found."
+    exit
+end
+
+# Display the menu and get the user's selection.
+set selection_and_path (printf '%s\n' $menu_entries_and_paths | dmenu $argv)
+
+# Exit if no selection is made
+if test -z "$selection_and_path"
+    exit
+end
+
+# Extract the file path from the selection.
+set filepath (echo $selection_and_path | awk -F'\t' '{print $2}')
+
+# Open the selected PDF with Zathura.
+if test -n "$filepath"
+    zathura "$filepath" &
+else
+    echo "File not found for selection."
+end
