@@ -27,6 +27,7 @@ if [[ $typeit -eq 0 ]]; then
 	clipctl disable && pass show -c "$password" 2>/dev/null
 	clipctl enable
 else
+	setxkbmap -layout us
 	pass show "$password" | { IFS= read -r pass; sleep 0.3; printf %s "$pass"; } |
 	    # xdotool did not work with lilyterm (I think) but xvkbd did.
 	    # However, xvkbd does not work with kitty (inputs wrong symbols into
@@ -36,4 +37,5 @@ else
 		xdotool type --clearmodifiers --file -
 		# TODO After another update, however, it is the other way around for
 		# input into Emacs.
+	setxkbmap -layout de -variant neo
 fi
