@@ -2,19 +2,30 @@
 
 
 # Create a temporary file.
-set fname_temp (mktemp)
-# echo "# " > $fname_temp
+set fname_temp (mktemp --suffix .md)
+
+
+# Check if the first argument is "--with-date".
+if test (count $argv) -gt 0; and test $argv[1] = "--with-date"
+    # Add the date and time to the beginning of the temporary file.
+    echo "# "(date "+%Y-%m-%d %H:%M:%S") > $fname_temp
+else
+    echo "# " > $fname_temp
+end
+
 
 # Open the temporary file with `editor` (note that since we do not add
 # `--no-wait` this is a sync operation).
 editor $fname_temp
 # TODO Go into insert mode right away
 # editor -e "(progn (find-file \"$fname_temp\") (evil-insert))"
+#
 
 # Append the contents of the temporary file to `Inbox.md`.
 echo >> Inbox.md
 echo >> Inbox.md
 cat $fname_temp >> Inbox.md
+
 
 # Delete the temporary file.
 command rm $fname_temp
