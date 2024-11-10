@@ -42,17 +42,17 @@ function getPhotos {
             echo "No photos to archive"
             rm -rf "$dir"
         else
-            if adb shell "test -d $storage/DCIM/Archive"; then
+            if adb shell "test -d /storage/$storage/DCIM/Archive"; then
                 echo "Archive directory already existed, appending …"
-            elif adb shell "test \! -e $storage/DCIM/Archive"; then
+            elif adb shell "test \! -e /storage/$storage/DCIM/Archive"; then
                 echo "Archive directory did not exist, creating …"
-                adb shell "mkdir $storage/DCIM/Archive/"
+                adb shell "mkdir /storage/$storage/DCIM/Archive/"
             else
                 echo "Archive is not a directory, aborting!"
                 return 1
             fi
             echo "Archiving photos on phone…"
-            adb shell "mv $storage/DCIM/Camera/* $storage/DCIM/Archive/"
+            adb shell "mv /storage/$storage/DCIM/Camera/* /storage/$storage/DCIM/Archive/"
         fi
 
         echo "Removing local thumbnails …"
