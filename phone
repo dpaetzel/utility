@@ -94,4 +94,7 @@ case $1 in
     recordings)
         getRecordings
         ;;
+    fixadb)
+        fixADB
+        ;;
 esac
