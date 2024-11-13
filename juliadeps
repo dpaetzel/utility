@@ -1,0 +1,27 @@
+#!/usr/bin/env fish
+#
+# Checks which Julia dependencies are really used by the current project.
+
+
+set deps (julia --project=. -E "import Pkg; Pkg.status()" \
+    | grep -v "^Project\|^Status\|^Info\|^nothing" \
+    | sed -r "s/^.*\[[^ ]*\] //" \
+    | sed -r "s/^([^ ]*) .*/\1/")
+
+
+set unused ""
+
+for dep in $deps
+    if grep $dep src/**.jl test/**.jl > /dev/null
+    else
+        if grep $dep scripts/**.jl > /dev/null
+            echo $dep is only used in scripts/ but not src/ nor test/.
+        else
+            echo !! $dep is not used in either of scripts/, src/ or test/ !!
+            set unused $unused $dep
+        end
+    end
+end
+
+echo All entirely unused deps on a single line for doing "`] rm all those deps`":
+echo $unused
