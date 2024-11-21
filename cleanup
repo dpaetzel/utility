@@ -3,6 +3,12 @@
 # $HOME/Temporary).
 
 
+echo 'This script was replaced by `wf clean` (see NixOS config).'
+
+
+exit 1
+
+
 set -e
 
 
