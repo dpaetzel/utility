@@ -52,7 +52,7 @@ if test $should_manage_picom = "yes"
 end
 
 # Pause briefly before taking the screenshot.
-sleep 0.2
+sleep 0.5
 
 set args_scrot --freeze --select --line mode=classic,style=dash,width=3,color=red
 
@@ -67,6 +67,9 @@ switch $screenshot_mode
     case "save-as"
         scrot $args_scrot "$fname"
 end
+
+# Pause briefly before restarting picom.
+sleep 0.5
 
 # Restart picom if desired.
 if test $should_manage_picom = "yes"
