@@ -1,6 +1,10 @@
 #!/usr/bin/env fish
 
 
+set fpath_inbox $HOME/Zettels2/Zettels2/_INBOX.md
+mkdir -p (dirname $fpath_inbox)
+
+
 # Create a temporary file.
 set fname_temp (mktemp --suffix .md)
 
@@ -21,10 +25,10 @@ editor $fname_temp
 # editor -e "(progn (find-file \"$fname_temp\") (evil-insert))"
 #
 
-# Append the contents of the temporary file to `Inbox.md`.
-echo >> Inbox.md
-echo >> Inbox.md
-cat $fname_temp >> Inbox.md
+# Append the contents of the temporary file to the inbox file.
+echo >> "$fpath_inbox"
+echo >> "$fpath_inbox"
+cat $fname_temp >> "$fpath_inbox"
 
 
 # Delete the temporary file.
