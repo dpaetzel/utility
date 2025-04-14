@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 #
-# phone - Diverse utilities for my Nexus 5X.
+# phone - Diverse utilities for my Android phone.
 #
 # Copyright ⓒ 2017-∞ David Pätzel
 #
@@ -64,7 +64,7 @@ function getPhotos {
 function getRecordings {
     what=recordings
     localDir=$(mktemp --dry-run --directory --tmpdir=. $(date -I)-$what-XXXX)
-    phoneDir=sdcard/Android/data/com.github.axet.audiorecorder/files/recordings
+    phoneDir=/storage/self/primary/Music/Recordings
 
     adb pull "$phoneDir" "$localDir"
 
