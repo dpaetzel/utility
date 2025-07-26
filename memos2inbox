@@ -45,7 +45,7 @@ rsync -avz --exclude=".stfolder" "raspi:Inbox/" "$tmpdir/" || begin
     exit 1
 end
 
-if test -z (ls -A "$tmpdir")
+if test -z "$(ls -A "$tmpdir")"
     echo "✅ $tmpdir is empty, nothing to do."
     exit 0
 end
