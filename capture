@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
 
 
-set fpath_inbox $HOME/Zettels2/Zettels2/_INBOX.md
+set fpath_inbox $HOME/Zettels/Zettels/_INBOX.md
 mkdir -p (dirname $fpath_inbox)
 
 
