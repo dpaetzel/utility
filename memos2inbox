@@ -1,0 +1,134 @@
+#!/usr/bin/env fish
+#
+# memos2inbox – Fetch voice memos and transcribe them.
+#
+# Copyright ⓒ 2025-∞ David Pätzel
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# This script is part of my pipeline to get voice memos from my phone to my
+# inbox file. Memos land on my Raspberry Pi and can be fetched from there. This
+# script
+# - fetches the voice memos (and anything else in the phone's inbox which is
+#   sent to my inbox folder),
+# - transcribes them,
+# - appends them to my inbox file,
+# - performs some cleanup locally and remotely.
+
+
+# Append stuff to this file.
+set inbox "$HOME/Zettels/Zettels/_INBOX.md"
+
+# Move non-text/non-memo stuff to this folder.
+set inboxdir "$HOME/Inbox"
+
+# Create timestamped folder.
+set now (date "+%Y-%m-%dT%H-%M-%S")
+set tmpdir "$now Phone Inbox"
+mkdir -p $tmpdir
+
+# Sync from raspi.
+rsync -avz --exclude=".stfolder" "raspi:Inbox/" "$tmpdir/" || begin
+    echo "❌ rsync failed"
+    exit 1
+end
+
+if test -z (ls -A "$tmpdir")
+    echo "✅ $tmpdir is empty, nothing to do."
+    exit 0
+end
+
+# Check for unexpected file types.
+set allowed_ext txt md mp4
+set badfiles (find $tmpdir -type f | grep -vE "\.($(string join "|" $allowed_ext))\$")
+
+if test -n "$badfiles"
+    echo "⚠ Unexpected file types found, moving to $inboxdir:"
+    echo "⚠ This code path was not properly tested yet!"
+    for f in $badfiles
+        set dest "$inboxdir/"(basename $f)
+        set base (basename $f)
+        set name (string join '.' (string split '.' -- $base)[1..-2])
+        set ext (string split '.' -- $base)[-1]
+
+        # Loop to find unused filename.
+        set i 1
+        while test -e $dest
+            set dest "$inboxdir/$name"_"$i"."$ext"
+            set i (math $i + 1)
+        end
+
+        mv --no-clobber -- "$f" "$dest" || begin
+            echo "❌ Failed to move $f"
+            exit 1
+        end
+    end
+end
+
+# Append text and markdown files.
+for f in (find $tmpdir -type f \( -iname "*.txt" -o -iname "*.md" \))
+    echo >> $inbox
+    echo "## (basename $f)" >> $inbox
+    echo >> $inbox
+    cat $f >> $inbox
+    echo >> $inbox
+end
+
+# Transcribe MP4s.
+for f in (find $tmpdir -type f -iname "*.mp4")
+    echo "🎙 Transcribing $f …"
+    set ext mp4
+    set base (string join '.' (string split '.' -- $f)[1..-2])
+    set tmpwav (mktemp --suffix=.wav)
+    function cleanup_tmp --on-event fish_exit
+        rm -f $tmp
+    end
+
+    # -y b/c the temp file was already created above and needs to be
+    # -overwritten.
+    ffmpeg -y -i "$f" -ar 16000 -ac 1 "$tmpwav" || begin
+        echo "❌ ffmpeg failed on $f"
+        exit 1
+    end
+
+    whisper-cpp -m ~/3Ressourcen/whisper-cpp-Modelle/ggml-medium.bin \
+        --language de --file "$tmpwav" --output-txt --output-file "$base" || begin
+        echo "❌ whisper-cpp failed on $f"
+        exit 1
+    end
+
+    # Append transcription to _INBOX.md.
+    echo "## Transcription: (basename $f)" >> $inbox
+    cat "$base.txt" >> $inbox
+    echo -e "\n\n" >> $inbox
+end
+
+set dname "$now Inbox processed"
+and ssh raspi -- "mkdir \"$dname\""
+and ssh raspi -- "mv Inbox/* \"$dname\"" || begin
+    echo "❌ Failed to clean up on raspi, do it manually"
+    exit 1
+end
+
+
+# Rename temporary folder to …processed.
+set finaldir "$tmpdir processed"
+mv "$tmpdir" "$finaldir" || begin
+    echo "❌ Failed to rename $tmpdir"
+    exit 1
+end
+
+echo "✅ Done. Processed files moved to $finaldir"
+echo "Consider to move that manually to 4Archiv/Memos"

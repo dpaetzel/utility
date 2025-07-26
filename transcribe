@@ -1,0 +1,41 @@
+#!/usr/bin/env fish
+
+function show_help
+    echo "Usage: transcribe <audiofile>"
+    echo ""
+    echo "Transcribes an audio file using whisper-cpp."
+    echo ""
+    echo "If the input is not a .wav file, it is converted to 16kHz mono WAV first."
+    echo ""
+    echo "Arguments:"
+    echo "  <audiofile>     Path to the audio file to transcribe."
+    echo ""
+    echo "Options:"
+    echo "  --help          Show this help message and exit."
+end
+
+if test (count $argv) -eq 0 -o "$argv[1]" = "--help"
+    show_help
+    exit 0
+end
+
+set fpath $argv[1]
+set ext (string split '.' -- $fpath)[-1]
+set base (string join '.' (string split '.' -- $fpath)[1..-2])
+set outfname "$base"
+
+set cleanup 0
+if test "$ext" != "wav"
+    set tmp (mktemp --suffix=.wav)
+    set cleanup 1
+    function cleanup_tmp --on-event fish_exit
+        rm -f $tmp
+    end
+    # -y b/c the temp file was alraedy created above and needs to be
+    # -overwritten.
+    ffmpeg -y -i "$fpath" -ar 16000 -ac 1 "$tmp"
+else
+    set tmp "$fpath"
+end
+
+whisper-cpp -m ~/3Ressourcen/whisper-cpp-Modelle/ggml-medium.bin --language de --file "$tmp" --output-txt --output-file "$outfname"
