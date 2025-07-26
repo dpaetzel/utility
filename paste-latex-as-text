@@ -1,21 +1,41 @@
 #!/usr/bin/env fish
 
-# Retrieve the text from the clipboard
-set clipboard_content (xclip -selection clipboard -o)
+# Process the clipboard content directly to preserve newlines.
+#
+# The only meaningful escape sequences in single quotes are \', which escapes a
+# single quote and \\, which escapes the backslash symbol. Since we don't use
+# \', we could use single backslashes. However, Perl requires \\ to match \ and
+# further Perl substitutes \\ with \ in strings. Hence the \\\\ in Fish to get
+# \\ in the Perl regex to finally match \.
+xclip -selection clipboard -o | perl -0777 -pe '
+    # Remove LaTeX comments
+    s/%.*$//gm;
 
-# Process the text to strip LaTeX commands and handle footnotes
-set processed_text (echo "$clipboard_content" | perl -pe '
-    s/\\\\footnote\{([^}]*)\}/(\1)/g;     # Replace \footnote{...} with (...)
-    s/\\\\todo\{([^}]*)\}//g;             # Replace \todo{...} with the empty string
-    s/\\\\([a-zA-Z]+)\{([^}]+)\}/\2/g;    # Replace \command{arguments} with arguments
-    s/\\\\([a-zA-Z]+)\{\}/\1/g;           # Replace \command{} with command
-    s/\\\\([a-zA-Z]+)\b/\1/g;             # Replace \command with command
-')
+    # Replace \@ with empty string
+    s/\\\\@//g;
 
-# Place the processed text back into the clipboard
-echo "$processed_text" | xclip -selection clipboard
+    # Handle \footnote{...} that may span multiple lines
+    s/\\\\footnote\{(.*?)\}/ ($2)/gs;
 
-sleep 0.5
+    # Handle \todo{...} that may span multiple lines
+    s/\\\\todo\{(.*?)\}//gs;
 
-# Simulate a Ctrl+V keypress to paste the processed text
-xdotool key ctrl+v
+    # Handle commands with empty braces
+    s/\\\\([a-zA-Z]+)\{\}/$1/g;
+
+    # Handle other commands with arguments that may span multiple lines
+    s/\\\\([a-zA-Z]+)\{(.*?)\}/$2/gs;
+
+    # Handle commands without arguments
+    s/\\\\([a-zA-Z]+)\b/$1/g;
+
+    # Replace all newlines with spaces
+    s/\s*\n\s*/ /g;
+' \
+    | xclip -selection clipboard
+    # | cat
+
+# BUG This somehow seems to close Firefox tabs
+# sleep 0.5
+# Simulate a Ctrl+V keypress to paste the processed text.
+# xdotool key ctrl+v
